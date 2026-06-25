@@ -45,6 +45,15 @@ public class AuraRenderer extends RenderDBC {
     private float[][] lightVertRotation;
     private int lightVertN;
 
+    // === NpcDbcResu performance tuning ===
+    // Reused across frames to avoid allocating a Random per vertex (was new Random()
+    // in the inner aura loop -> ~100 allocations per aura per frame).
+    private static final Random SHARED_RANDOM = new Random();
+    // Aura density knobs. Fewer layers / bigger step = fewer model renders = more FPS,
+    // at the cost of a slightly thinner aura. Vanilla = 5 and 0.05f.
+    public static int AURA_MAX_LAYERS = 5;
+    public static float AURA_LAYER_STEP = 0.05f;
+
 
     public AuraRenderer() {
         super(new ModelAura(), 0.5F);
@@ -84,7 +93,7 @@ public class AuraRenderer extends RenderDBC {
 
         int speed = aura.speed;
         int age = Math.max(1, aura.ticksExisted % speed);
-        Random rand = new Random();
+        Random rand = SHARED_RANDOM;
 
 
         if (aura.type3D == EnumAuraTypes3D.None)
@@ -179,14 +188,14 @@ public class AuraRenderer extends RenderDBC {
         byte race = aura.auraData.getRace();
         byte state = aura.auraData.getState();
 
-        int maxLayers = 5;
+        int maxLayers = AURA_MAX_LAYERS;
+        // Bind once: the inner loop re-bound the same texture every iteration.
+        this.renderManager.renderEngine.bindTexture(aura.text1);
         for (float i = 1; i < maxLayers + 1; ++i) {
             float layerPercent = i / maxLayers;
             float layerTemp = layerPercent * 20f;
 
-            for (float j = 1; j < 2; j += 0.05f) {
-                this.renderManager.renderEngine.bindTexture(aura.text1);
-
+            for (float j = 1; j < 2; j += AURA_LAYER_STEP) {
                 model.auraModel.offsetY = -(i / maxLayers) * aura.height;
                 model.auraModel.offsetZ = layerTemp < 7F ? 0.2F - 1 * 0.075F : 0.35F + (1 - 7.0F) * 0.055F;
                 model.auraModel.rotateAngleX = (0.9926646F - layerTemp * 0.01F) * (1 - i / maxLayers) * (1 - ((float) Math.pow(i / maxLayers, 2)));
@@ -194,7 +203,7 @@ public class AuraRenderer extends RenderDBC {
                     model.auraModel.rotateAngleX = 100;
 
                 model.auraModel.rotationPointY = 55.0F + (i / maxLayers) * 20;
-                float r = new Random().nextInt(200);
+                float r = SHARED_RANDOM.nextInt(200);
                 if (layerTemp > 3) //aura intensity
                     model.auraModel.offsetY += -r * 0.0015f * intensity * getStateIntensity(state, race);
 
@@ -202,7 +211,6 @@ public class AuraRenderer extends RenderDBC {
                 glRotatef(360 * j, 0.0F, 1.0F, 0.0F);
                 if (layerPercent < 0.21) {
                     glColor4f(color, alpha);
-                    this.renderManager.renderEngine.bindTexture(aura.text1);
                     model.auraModel.render(0.0625f);
 
                 }
@@ -227,7 +235,7 @@ public class AuraRenderer extends RenderDBC {
         if (!JGConfigClientSettings.CLIENT_DA12)
             return;
 
-        Random rand = new Random();
+        Random rand = SHARED_RANDOM;
 
         if (aura.ticksExisted % 100 > 0 && rand.nextLong() < 1)
             return;
