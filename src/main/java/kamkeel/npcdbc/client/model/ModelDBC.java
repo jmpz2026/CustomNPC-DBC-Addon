@@ -9,6 +9,7 @@ import kamkeel.npcdbc.client.model.part.*;
 import kamkeel.npcdbc.client.model.part.hair.DBCHair;
 import kamkeel.npcdbc.client.utils.Color;
 import kamkeel.npcdbc.client.utils.RLCache;
+import kamkeel.npcdbc.client.utils.RenderLOD;
 import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.controllers.AuraController;
@@ -138,6 +139,9 @@ public class ModelDBC extends ModelBase {
     }
 
     public void renderFace(EntityCustomNpc entity, DBCDisplay display) {
+        // LOD: the face is several extra draw calls and is invisible far away.
+        if (RenderLOD.beyond(entity, ConfigDBCClient.ModelDetailMaxDistance))
+            return;
         if (display.useSkin) {
             float y = entity.modelData.getBodyY();
             ModelScalePart head = entity.modelData.modelScale.head;

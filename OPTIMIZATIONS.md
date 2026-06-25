@@ -144,17 +144,37 @@ Ahora el bound del loop pasa por `density()`, que escala por config:
 - **`RLCache` en `DBCHair`**: el `new ResourceLocation` por frame del pelo base ahora
   usa el cache (ver sección 3).
 
+### 8. LOD por distancia — draw calls del modelo y del aura (`RenderLOD.java`)
+El costo de FPS dominante con muchos entes DBC es la **cantidad de draw calls**: cada
+NPC pinta cuerpo (3-5 capas × 5 partes en Namek/Arco) + cara (6-11 quads) + pelo, y el
+aura hace hasta ~100 `model.render()`. La geometría está en display lists (no se reenvía),
+pero cada pasada es un draw call + bind. De lejos esos detalles no se ven.
+
+LOD por distancia contra `renderViewEntity` (`RenderLOD.beyond`):
+
+| Config (`Rendering`) | Default | Efecto |
+|---|---|---|
+| `Model Detail Max Distance` | `0` | Distancia máx. a la que se dibuja la **cara** del NPC (ojos/nariz/boca/cejas, 6-11 draw calls). Más allá se salta. Aplica **incluso en Low Spec**. `0` = siempre. Sugerido low-end: `24`. |
+| `Aura LOD Distance` | `0` | Más allá de N bloques el aura usa **mitad de capas + doble step** (~4× menos `model.render()`). El glow se ve casi igual de lejos. `0` = full. Sugerido: `32`. |
+
+**Alcance honesto:** el LOD de cara (#1) salta solo la **cara** (seguro, invisible de
+lejos); las capas de color del cuerpo (Namek/Arco) **no** se tocan porque colorean todo
+el cuerpo y saltarlas se notaría. Reducir esas a 1 pase requeriría atlas de textura o un
+shader que aplique los colores de capa en una sola pasada — refactor visual grande, no
+incluido. El LOD de aura (#2) adelgaza auras lejanas sin diferencia perceptible.
+
 ---
 
 ## Cómo ajustar
 Todo se controla desde el config `Rendering` (archivo `CustomNpcPlus/dbc/client.cfg`) o,
 para los toggles, desde el GUI de inventario DBC. Resumen:
 
-- **PC patata:** dejar `Low Spec Mode = true` (default). Todo lo caro off.
+- **PC patata:** dejar `Low Spec Mode = true` (default) + `Model Detail Max Distance = 24`
+  (la cara de NPCs lejanos es el costo que queda en low-spec).
 - **PC media:** `Low Spec Mode = false` + subir `Bloom Resolution Shift`, bajar
   `Max Bloom Levels` / `Aura Max Layers`, subir `Aura Layer Step`, poner
-  `Outline Max Distance` corto, `Custom Particle Max Count` bajo y/o
-  `Aura Particle Density Percent` a ~50.
-- **PC fuerte:** `Low Spec Mode = false` y valores vanilla.
+  `Outline Max Distance` corto, `Custom Particle Max Count` bajo, `Aura Particle
+  Density Percent` a ~50, `Model Detail Max Distance` ~32 y `Aura LOD Distance` ~32.
+- **PC fuerte:** `Low Spec Mode = false`, distancias LOD en `0` y valores vanilla.
 
 Para volver al look vanilla del bloom: `Bloom Resolution Shift = 0`.

@@ -64,6 +64,12 @@ public class ConfigDBCClient {
     public static Property AuraLayerStepProperty;
     public static float AuraLayerStep = 0.05f;
 
+    // Distance-based LOD (0 = off). Cuts draw calls for far/crowded entities.
+    public static Property ModelDetailMaxDistanceProperty;
+    public static int ModelDetailMaxDistance = 0;
+    public static Property AuraMaxDistanceProperty;
+    public static int AuraMaxDistance = 0;
+
     // --- Low-spec gates ---------------------------------------------------
     // When LowSpecMode is on, the heavy visual stack is forced off regardless
     // of the individual toggles. Turn LowSpecMode off to let the per-feature
@@ -174,6 +180,11 @@ public class ConfigDBCClient {
             AuraMaxLayers = Math.max(1, Math.min(5, AuraMaxLayersProperty.getInt(5)));
             AuraLayerStepProperty = config.get(RENDERING, "Aura Layer Step", 0.05, "Aura inner-loop step. Bigger = fewer iterations = more FPS. Vanilla = 0.05." + "\n(Min: 0.05, Max: 1.0)");
             AuraLayerStep = (float) Math.max(0.05, Math.min(1.0, AuraLayerStepProperty.getDouble(0.05)));
+
+            ModelDetailMaxDistanceProperty = config.get(RENDERING, "Model Detail Max Distance", 0, "Max distance (blocks) at which NPC face detail (eyes/nose/mouth/brows) is drawn." + "\nThe face is several extra draw calls and is invisible far away. Skipping it cuts" + "\ndraw calls for distant/crowded NPCs (applies even in Low Spec Mode)." + "\n0 = always draw (default). Suggested for low-end: 24." + "\n(Min: 0)");
+            ModelDetailMaxDistance = Math.max(0, ModelDetailMaxDistanceProperty.getInt(0));
+            AuraMaxDistanceProperty = config.get(RENDERING, "Aura LOD Distance", 0, "Distance (blocks) past which auras render with half the layers and a coarser step" + "\n(~4x fewer model renders). The glow is nearly identical far away." + "\n0 = full detail at any distance (default). Suggested for low-end: 32." + "\n(Min: 0)");
+            AuraMaxDistance = Math.max(0, AuraMaxDistanceProperty.getInt(0));
 
             FirstPerson3DAuraOpacityProperty = config.get(RENDERING, "First person 3D Aura Opacity", 100, "The opacity of the first person 3D Aura." + "\nModifying this makes it so auras on other players render normally without blinding you" + "\n(Min: 0, Max: 100)");
             FirstPerson3DAuraOpacity = Math.max(Math.min(100, FirstPerson3DAuraOpacityProperty.getInt(100)), 0);

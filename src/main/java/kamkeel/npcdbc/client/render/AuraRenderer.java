@@ -12,6 +12,7 @@ import kamkeel.npcdbc.client.ClientConstants;
 import kamkeel.npcdbc.client.model.ModelAura;
 import kamkeel.npcdbc.client.sound.ClientSound;
 import kamkeel.npcdbc.config.ConfigDBCClient;
+import kamkeel.npcdbc.client.utils.RenderLOD;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.constants.enums.EnumAuraTypes3D;
@@ -188,6 +189,11 @@ public class AuraRenderer extends RenderDBC {
 
         int maxLayers = ConfigDBCClient.AuraMaxLayers;
         float layerStep = ConfigDBCClient.AuraLayerStep;
+        // LOD: distant auras get half the layers + a coarser step (~4x fewer renders).
+        if (RenderLOD.beyond(aura.entity, ConfigDBCClient.AuraMaxDistance)) {
+            maxLayers = Math.max(1, maxLayers / 2);
+            layerStep = Math.min(1f, layerStep * 2f);
+        }
         // Bind once: the inner loop re-bound the same texture every iteration.
         this.renderManager.renderEngine.bindTexture(aura.text1);
         for (float i = 1; i < maxLayers + 1; ++i) {
