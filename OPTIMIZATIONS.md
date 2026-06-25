@@ -67,6 +67,31 @@ aura/ki en pantalla.
 | `AURA_MAX_LAYERS` | `5` | Menos capas = menos renders de modelo = más FPS, aura más fina. |
 | `AURA_LAYER_STEP` | `0.05f` | Paso mayor = menos iteraciones del loop interno. |
 
+### 3. Cache de ResourceLocation — `RLCache.java`
+El path de render construía la misma ruta de textura cada frame vía concatenación de
+strings + `new ResourceLocation(...)`, que re-parsea, valida, pasa a minúsculas y
+aloca en cada llamada. Por cada parte del cuerpo, por frame, por player DBC.
+
+**Gratis (sin cambio visual):** nuevo `RLCache` (HashMap estático, solo hilo cliente)
+cachea las instancias por su string. `ResourceLocation` es inmutable → cache 100%
+correcta; las rutas son un conjunto acotado → el mapa se mantiene pequeño. Aplicado a
+**48 call sites**: `ModelDBC` (31) y `CNPCAnimationHelper` (17). Elimina el parse +
+alloc + churn de GC. Escala con la cantidad de players DBC.
+
+### 4. Outline — gate de distancia (`OutlineRenderer.java`)
+El outline es un pase extra caro (varios `model.render()` + 2 pasos de shader + bloom
+por entidad) y apenas se nota lejos de la cámara.
+
+**Tuneable (`ConfigDBCClient`, default = vanilla):**
+
+| Campo / Config | Default | Efecto |
+|---|---|---|
+| `Outline Max Distance` (sección `Rendering`) | `0` | Distancia máx. (bloques) a la que se renderiza el outline de players y NPCs. `0` = sin límite (comportamiento idéntico al actual). `>0` = salta el pase (incluido el wrap de bloom) más allá de N bloques. |
+
+Gateado en los 2 call sites: player en `RenderEventHandler`, NPC en `MixinModelMPM`.
+Distancia vía `getDistanceSqToEntity` contra `renderViewEntity` — sin código GL nuevo,
+no afecta drivers.
+
 ---
 
 ## Cómo ajustar
