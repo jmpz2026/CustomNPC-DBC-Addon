@@ -70,7 +70,7 @@ public class PostProcessing {
     private static boolean isScissorEnabled;
 
     public static void startBlooming(boolean clearBloomBuffer) {
-        if (!bloomSupported || !ConfigDBCClient.EnableBloom || !ShaderHelper.shadersEnabled())
+        if (!bloomSupported || !ConfigDBCClient.bloomEnabled() || !ShaderHelper.shadersEnabled())
             return;
 
         PREVIOUS_BUFFER = glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);

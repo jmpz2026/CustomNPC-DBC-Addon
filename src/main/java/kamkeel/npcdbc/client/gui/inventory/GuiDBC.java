@@ -136,6 +136,11 @@ public class GuiDBC extends GuiCNPCInventory implements IGuiData, ICustomScrollL
             addLabel(new GuiNpcLabel(13, "display.firstPersonAura", guiLeft + 144, y, 0xFFFFFF));
             addTextField(new GuiNpcTextField(66, this, fontRendererObj, guiLeft + 279, y - 5, 35, 20, ConfigDBCClient.FirstPerson3DAuraOpacity + ""));
             getTextField(66).integersOnly = true;
+
+            y += 24;
+            addLabel(new GuiNpcLabel(14, "display.lowspec", guiLeft + 144, y, 0xFFFFFF));
+            button = new GuiNpcButton(14, guiLeft + 265, y - 5, 50, 20, new String[]{"gui.enabled", "gui.disabled"}, ConfigDBCClient.LowSpecMode ? 0 : 1);
+            this.addButton(button);
         }
     }
 
@@ -346,6 +351,10 @@ public class GuiDBC extends GuiCNPCInventory implements IGuiData, ICustomScrollL
             } else if (guibutton.id == 12) {
                 ConfigDBCClient.EnableShaders = ((GuiNpcButton) guibutton).getValue() == 0;
                 ConfigDBCClient.EnableShadersProperty.set(ConfigDBCClient.EnableShaders);
+                ConfigDBCClient.config.save();
+            } else if (guibutton.id == 14) {
+                ConfigDBCClient.LowSpecMode = ((GuiNpcButton) guibutton).getValue() == 0;
+                ConfigDBCClient.LowSpecModeProperty.set(ConfigDBCClient.LowSpecMode);
                 ConfigDBCClient.config.save();
             }
         }

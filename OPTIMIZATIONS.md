@@ -78,7 +78,30 @@ correcta; las rutas son un conjunto acotado → el mapa se mantiene pequeño. Ap
 **48 call sites**: `ModelDBC` (31) y `CNPCAnimationHelper` (17). Elimina el parse +
 alloc + churn de GC. Escala con la cantidad de players DBC.
 
-### 4. Outline — gate de distancia (`OutlineRenderer.java`)
+### 4. Low Spec Mode — master switch para PCs muy bajos
+Toggle maestro en `ConfigDBCClient` para apagar de una toda la pila visual cara.
+
+**Config (`Rendering`):**
+
+| Campo / Config | Default | Efecto |
+|---|---|---|
+| `Low Spec Mode` | **`true`** | Cuando ON, fuerza OFF: bloom, outlines, auras del addon y partículas custom, ignorando los toggles individuales. Ponlo en `false` para que manden los toggles por feature (defaults = vanilla on). |
+| `Enable Auras` | `true` | Off global de auras del addon (no afecta auras DBC nativas). Solo aplica con Low Spec Mode OFF. |
+| `Enable Custom Particles` | `true` | Off de partículas custom del addon. Con OFF, caen al render base de DBC (sin cola del addon). Solo aplica con Low Spec Mode OFF. |
+
+Gates (`ConfigDBCClient`): `bloomEnabled()`, `outlinesEnabled()`, `aurasEnabled()`,
+`particlesEnabled()` = `!LowSpecMode && Enable<X>`. Usados en:
+- Bloom → `PostProcessing.startBlooming`.
+- Outlines → `RenderEventHandler` (player) + `MixinModelMPM` (NPC).
+- Auras → `RenderEventHandler` render de `AuraRenderer` (player + NPC).
+- Partículas → gateadas en la **fuente** (`MixinEntityCusPar`): si off, no se encolan
+  (sin leak de cola, caen al render base DBC).
+
+Botón **Low Spec Mode** añadido al GUI de inventario DBC (junto a Bloom/Outlines/Shaders).
+Este build arranca con Low Spec Mode **ON** por default (pensado para PCs de muy bajos
+recursos); el usuario lo apaga si su equipo aguanta.
+
+### 5. Outline — gate de distancia (`OutlineRenderer.java`)
 El outline es un pase extra caro (varios `model.render()` + 2 pasos de shader + bloom
 por entidad) y apenas se nota lejos de la cámara.
 

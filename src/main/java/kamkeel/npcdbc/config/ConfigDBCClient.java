@@ -42,6 +42,33 @@ public class ConfigDBCClient {
     public static boolean EnableShaders = true;
     public static Property EnableBloomProperty;
     public static boolean EnableBloom = true;
+    public static Property EnableAurasProperty;
+    public static boolean EnableAuras = true;
+    public static Property EnableCustomParticlesProperty;
+    public static boolean EnableCustomParticles = true;
+
+    public static Property LowSpecModeProperty;
+    public static boolean LowSpecMode = true;
+
+    // --- Low-spec gates ---------------------------------------------------
+    // When LowSpecMode is on, the heavy visual stack is forced off regardless
+    // of the individual toggles. Turn LowSpecMode off to let the per-feature
+    // toggles (and their vanilla defaults) take over.
+    public static boolean bloomEnabled() {
+        return !LowSpecMode && EnableBloom;
+    }
+
+    public static boolean outlinesEnabled() {
+        return !LowSpecMode && EnableOutlines;
+    }
+
+    public static boolean aurasEnabled() {
+        return !LowSpecMode && EnableAuras;
+    }
+
+    public static boolean particlesEnabled() {
+        return !LowSpecMode && EnableCustomParticles;
+    }
 
     public static Property FirstPerson3DAuraOpacityProperty;
     public static int FirstPerson3DAuraOpacity = 100;
@@ -96,6 +123,15 @@ public class ConfigDBCClient {
 
             EnableBloomProperty = config.get(RENDERING, "Enable Bloom", true, "Enables the bloom effect for player outlines and auras");
             EnableBloom = EnableBloomProperty.getBoolean(true);
+
+            EnableAurasProperty = config.get(RENDERING, "Enable Auras", true, "Enables addon aura rendering (does not affect base DBC auras)");
+            EnableAuras = EnableAurasProperty.getBoolean(true);
+
+            EnableCustomParticlesProperty = config.get(RENDERING, "Enable Custom Particles", true, "Enables addon custom particle rendering");
+            EnableCustomParticles = EnableCustomParticlesProperty.getBoolean(true);
+
+            LowSpecModeProperty = config.get(RENDERING, "Low Spec Mode", true, "Master switch for ultra low-end PCs." + "\nWhen ON, the heavy visual stack (bloom, outlines, addon auras, custom particles)" + "\nis forced OFF regardless of the individual toggles above." + "\nTurn OFF to let the per-feature toggles take over." + "\nDefault ON for this performance-focused build.");
+            LowSpecMode = LowSpecModeProperty.getBoolean(true);
 
             FirstPerson3DAuraOpacityProperty = config.get(RENDERING, "First person 3D Aura Opacity", 100, "The opacity of the first person 3D Aura." + "\nModifying this makes it so auras on other players render normally without blinding you" + "\n(Min: 0, Max: 100)");
             FirstPerson3DAuraOpacity = Math.max(Math.min(100, FirstPerson3DAuraOpacityProperty.getInt(100)), 0);

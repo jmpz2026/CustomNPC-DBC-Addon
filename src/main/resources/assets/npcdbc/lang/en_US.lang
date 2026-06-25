@@ -249,6 +249,7 @@ display.bloom=Bloom
 display.outlines=Outlines
 display.shaders=Shaders
 display.firstPersonAura=1st Person Aura Opacity
+display.lowspec=Low Spec Mode
 
 outline.noiseSize=Noise Size
 outline.colorSmoothness=Color Smoothness

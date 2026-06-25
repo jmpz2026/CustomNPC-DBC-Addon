@@ -249,6 +249,7 @@ display.bloom=泛光
 display.outlines=气轮廓
 display.shaders=着色器
 display.firstPersonAura=第一人称气轮廓透明度
+display.lowspec=低配模式
 
 outline.noiseSize=轮廓光效粗糙度
 outline.colorSmoothness=颜色平滑度

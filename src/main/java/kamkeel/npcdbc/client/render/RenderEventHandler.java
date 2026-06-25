@@ -164,7 +164,7 @@ public class RenderEventHandler {
         ////////////////////////////////////////
         //Outline
         Outline outline = data.getOutline();
-        if (outline != null && ConfigDBCClient.EnableOutlines && !isItem && OutlineRenderer.withinOutlineDistance(player)) {
+        if (outline != null && ConfigDBCClient.outlinesEnabled() && !isItem && OutlineRenderer.withinOutlineDistance(player)) {
             startBlooming(ClientConstants.renderingGUI);
             glStencilFunc(GL_GREATER, player.getEntityId() % 256, 0xFF);  // Test stencil value
             glStencilMask(0xff);
@@ -172,7 +172,7 @@ public class RenderEventHandler {
             endBlooming();
         }
 
-        boolean renderAura = aura != null && aura.shouldRender(), renderParticles = !data.particleRenderQueue.isEmpty();
+        boolean renderAura = aura != null && aura.shouldRender() && ConfigDBCClient.aurasEnabled(), renderParticles = !data.particleRenderQueue.isEmpty();
         ////////////////////////////////////////
         ////////////////////////////////////////
         //Aura
@@ -249,7 +249,7 @@ public class RenderEventHandler {
         disableStencilWriting(entity.getEntityId() % 256, false);
         mc.entityRenderer.disableLightmap(0);
 
-        boolean renderAura = aura != null, renderParticles = !display.particleRenderQueue.isEmpty();
+        boolean renderAura = aura != null && ConfigDBCClient.aurasEnabled(), renderParticles = !display.particleRenderQueue.isEmpty();
         ////////////////////////////////////////
         ////////////////////////////////////////
         //Aura
