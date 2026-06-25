@@ -2,6 +2,7 @@ package kamkeel.npcdbc.client;
 
 import JinRyuu.JRMCore.client.config.jrmc.JGConfigClientSettings;
 import JinRyuu.JRMCore.entity.EntityCusPar;
+import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.enums.EnumAuraTypes2D;
 import kamkeel.npcdbc.data.IAuraData;
@@ -11,6 +12,22 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
 
 public class ParticleFormHandler {
+
+    /**
+     * Aura particle spawn count, scaled by {@link ConfigDBCClient#auraParticlePercent()}.
+     * Replaces the raw {@code get_da1()} density loop bound so Low Spec Mode (25%) and
+     * the user percent both cut how many real EntityCusPar get spawned/ticked.
+     */
+    private static int density() {
+        int base = JGConfigClientSettings.get_da1();
+        int pct = ConfigDBCClient.auraParticlePercent();
+        if (pct >= 100)
+            return base;
+        if (pct <= 0)
+            return 0;
+        return Math.round(base * pct / 100f);
+    }
+
     public static void spawnAura2D(DBCDisplay display) {
         if (display != null && display.auraEntity != null)
             spawnAura2D(display.auraEntity.type2D, display.auraEntity.color1, display.npc, display.auraEntity.auraData, display.npc.height, false);
@@ -32,7 +49,7 @@ public class ParticleFormHandler {
         }
         switch (type) {
             case Base:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     double posY = entity.posY + (entity instanceof EntityPlayerSP ? 2 : 0.0);
                     float red = (color >> 16 & 255) / 255.0F;
                     float green = (color >> 8 & 255) / 255.0F;
@@ -56,7 +73,7 @@ public class ParticleFormHandler {
                 }
                 break;
             case SaiyanGod:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     double posY = entity.posY + 1.6;
                     float red, green, blue, alpha = 0;
                     double x, y, z;
@@ -153,7 +170,7 @@ public class ParticleFormHandler {
                 }
                 break;
             case SaiyanBlue:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     double posY = entity.posY + 1.6;
                     float red, green, blue, alpha = 0;
                     double x, y, z;
@@ -306,7 +323,7 @@ public class ParticleFormHandler {
                 }
                 break;
             case SaiyanBlueEvo:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     float red, green, blue, alpha;
                     double x, y, z;
 
@@ -386,7 +403,7 @@ public class ParticleFormHandler {
                 }
                 break;
             case SaiyanRose:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     float out = 1.6F;
                     float in = 1.0F;
                     float life = 0.8F * height;
@@ -443,7 +460,7 @@ public class ParticleFormHandler {
                 break;
 
             case SaiyanRoseEvo:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     float red, green, blue, alpha;
                     double x, y, z;
 
@@ -535,7 +552,7 @@ public class ParticleFormHandler {
                 }
                 break;
             case UltimateArco:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     float out = 1.6F;
                     float life = 0.8F * height;
                     int i;
@@ -583,7 +600,7 @@ public class ParticleFormHandler {
                 }
                 break;
             case UI:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     float red, red2, green2, blue3, green, blue, alpha = 0.7f;
                     double x, y, z;
                     float life = 0.8F * height;
@@ -752,7 +769,7 @@ public class ParticleFormHandler {
                 }
                 break;
             case GoD:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     double x, y, z;
                     float width = height * 0.8f;
                     float offset = 0;
@@ -775,7 +792,7 @@ public class ParticleFormHandler {
 
                 break;
             case GoDToppo:
-                for (int r = 0; r < JGConfigClientSettings.get_da1(); ++r) {
+                for (int r = 0; r < density(); ++r) {
                     for (int i = 0; i < 3; ++i) {
                         double x = Math.random() * 2.5 - 1.25;
                         double y = Math.random() * (double) height - 0.20000000298023224;
@@ -791,7 +808,7 @@ public class ParticleFormHandler {
                 }
                 break;
             case Jiren:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     boolean bol4a = true;
                     double posXOth = entity.posX;
                     double posYOth = entity.posY + (double) (0.0F);
@@ -909,7 +926,7 @@ public class ParticleFormHandler {
                 }
                 break;
             case KettleMode:
-                for (int k = 0; k < JGConfigClientSettings.get_da1(); ++k) {
+                for (int k = 0; k < density(); ++k) {
                     for (int i = 0; i < 3; ++i) {
                         double posXOth = entity.posX;
                         double posYOth = entity.posY + (double) (entity instanceof EntityPlayerSP ? -1.6F : 0.0F);

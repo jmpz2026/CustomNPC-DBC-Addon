@@ -48,6 +48,8 @@ public class ConfigDBCClient {
     public static boolean EnableCustomParticles = true;
     public static Property CustomParticleMaxCountProperty;
     public static int CustomParticleMaxCount = 0;
+    public static Property AuraParticlePercentProperty;
+    public static int AuraParticlePercent = 100;
 
     public static Property LowSpecModeProperty;
     public static boolean LowSpecMode = true;
@@ -85,6 +87,14 @@ public class ConfigDBCClient {
     /** True if another addon particle can be queued given the current per-entity count. */
     public static boolean particleQueueHasRoom(int currentSize) {
         return CustomParticleMaxCount <= 0 || currentSize < CustomParticleMaxCount;
+    }
+
+    /**
+     * Effective aura-particle density percent. Low Spec Mode caps it at 25% so the
+     * fork spawns far fewer EntityCusPar (big RAM/CPU/GC win) while keeping the look.
+     */
+    public static int auraParticlePercent() {
+        return LowSpecMode ? Math.min(AuraParticlePercent, 25) : AuraParticlePercent;
     }
 
     public static Property FirstPerson3DAuraOpacityProperty;
@@ -149,6 +159,9 @@ public class ConfigDBCClient {
 
             CustomParticleMaxCountProperty = config.get(RENDERING, "Custom Particle Max Count", 0, "Per-entity cap on queued addon particles. Extra particles fall back to base DBC rendering." + "\n0 = no cap (default). Lower this on weak GPUs instead of disabling particles entirely." + "\n(Min: 0)");
             CustomParticleMaxCount = Math.max(0, CustomParticleMaxCountProperty.getInt(0));
+
+            AuraParticlePercentProperty = config.get(RENDERING, "Aura Particle Density Percent", 100, "Percentage of aura particles (EntityCusPar) actually spawned into the world." + "\nFewer particles = big RAM/CPU/GC savings since each is a real ticking entity." + "\nLow Spec Mode caps this at 25%. 0 = none, 100 = full (vanilla)." + "\n(Min: 0, Max: 100)");
+            AuraParticlePercent = Math.max(0, Math.min(100, AuraParticlePercentProperty.getInt(100)));
 
             LowSpecModeProperty = config.get(RENDERING, "Low Spec Mode", true, "Master switch for ultra low-end PCs." + "\nWhen ON, the heavy visual stack (bloom, outlines, addon auras, custom particles)" + "\nis forced OFF regardless of the individual toggles above." + "\nTurn OFF to let the per-feature toggles take over." + "\nDefault ON for this performance-focused build.");
             LowSpecMode = LowSpecModeProperty.getBoolean(true);

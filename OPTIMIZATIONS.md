@@ -124,6 +124,26 @@ Gateado en los 2 call sites: player en `RenderEventHandler`, NPC en `MixinModelM
 Distancia vía `getDistanceSqToEntity` contra `renderViewEntity` — sin código GL nuevo,
 no afecta drivers.
 
+### 6. Densidad de partículas de aura — `ParticleFormHandler.java` (el win grande de RAM/CPU/GC)
+Las partículas de aura son **entidades reales** (`EntityCusPar`) spawneadas al mundo con
+`spawnEntityInWorld` en cada tick de aura (loop `get_da1()` × N × 2). Cada una la tickea,
+mueve y colisiona Minecraft → carga fuerte de **RAM + CPU + GC**, no solo GPU. Los gates
+de fase 1-2 solo evitaban el *render* enhanced; las entidades igual spawneaban.
+
+Ahora el bound del loop pasa por `density()`, que escala por config:
+
+| Config (`Rendering`) | Default | Efecto |
+|---|---|---|
+| `Aura Particle Density Percent` | `100` | % de partículas de aura realmente spawneadas. Low Spec Mode lo **capa a 25%**. `0` = ninguna, `100` = vanilla. Menos = gran ahorro RAM/CPU/GC. |
+
+12 loops `get_da1()` → `density()`. En low-spec (default) se spawnea **¼** de las partículas.
+
+### 7. Micro-allocs en caliente (gratis, sin cambio visual)
+- **`DBCData.get` cacheado** en `MixinEntityCusPar`: era un lookup **synchronized** +
+  doble `HashMap` + `getCommandSenderName()` llamado **3× por partícula**; ahora 1×.
+- **`RLCache` en `DBCHair`**: el `new ResourceLocation` por frame del pelo base ahora
+  usa el cache (ver sección 3).
+
 ---
 
 ## Cómo ajustar
@@ -133,7 +153,8 @@ para los toggles, desde el GUI de inventario DBC. Resumen:
 - **PC patata:** dejar `Low Spec Mode = true` (default). Todo lo caro off.
 - **PC media:** `Low Spec Mode = false` + subir `Bloom Resolution Shift`, bajar
   `Max Bloom Levels` / `Aura Max Layers`, subir `Aura Layer Step`, poner
-  `Outline Max Distance` corto y/o `Custom Particle Max Count` bajo.
+  `Outline Max Distance` corto, `Custom Particle Max Count` bajo y/o
+  `Aura Particle Density Percent` a ~50.
 - **PC fuerte:** `Low Spec Mode = false` y valores vanilla.
 
 Para volver al look vanilla del bloom: `Bloom Resolution Shift = 0`.
