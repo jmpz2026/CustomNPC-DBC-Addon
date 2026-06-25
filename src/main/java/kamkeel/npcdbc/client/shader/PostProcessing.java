@@ -324,6 +324,10 @@ public class PostProcessing {
     public static void init(int width, int height) {
         hasInitialized = true;
 
+        // Apply quality tunables from config (client-side only entry point).
+        BLOOM_RES_SHIFT = ConfigDBCClient.BloomResShift;
+        MAX_BLOOM_LEVELS = ConfigDBCClient.MaxBloomLevels;
+
         // Minimal check: if FBOs or shaders aren’t supported, disable bloom entirely
         if (!OpenGlHelper.framebufferSupported || !ShaderHelper.shadersEnabled()) {
             bloomSupported = false;

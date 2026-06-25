@@ -40,10 +40,12 @@ El commit base usaba versiones de infra ya podadas del nexus de GTNH. Arreglado:
 ### 1. Bloom — `PostProcessing.java` + `blur.frag`
 El bloom se mantiene activo, solo más barato. Campos tuneables (`PostProcessing`):
 
-| Campo | Default | Efecto |
+Expuestos en config (`Rendering`), leídos en `PostProcessing.init`:
+
+| Config | Default | Efecto |
 |---|---|---|
-| `BLOOM_RES_SHIFT` | `1` | Downscale uniforme de toda la mip chain. `1` = cuarto-res (~4× menos píxeles bloom). `0` = look vanilla (media-res). |
-| `MAX_BLOOM_LEVELS` | `6` | Tope de niveles de mip procesados (init + loops down/up). |
+| `Bloom Resolution Shift` (`BLOOM_RES_SHIFT`) | `1` | Downscale uniforme de toda la mip chain. `1` = cuarto-res (~4× menos píxeles bloom). `0` = look vanilla (media-res). |
+| `Max Bloom Levels` (`MAX_BLOOM_LEVELS`) | `6` | Tope de niveles de mip procesados (init + loops down/up). |
 
 `blur.frag`: gaussiano de **11→7 taps** (~36% menos fetches por paso de blur; el
 blur corre una vez por mip en ambas direcciones).
@@ -60,12 +62,12 @@ aura/ki en pantalla.
 - `bindTexture(aura.text1)` una sola vez antes de los loops (antes se rebindeaba en
   cada iteración, más un bind duplicado).
 
-**Tuneables (`AuraRenderer`, default = vanilla):**
+**Tuneables, expuestos en config (`Rendering`), leídos por frame (default = vanilla):**
 
-| Campo | Default | Efecto |
+| Config | Default | Efecto |
 |---|---|---|
-| `AURA_MAX_LAYERS` | `5` | Menos capas = menos renders de modelo = más FPS, aura más fina. |
-| `AURA_LAYER_STEP` | `0.05f` | Paso mayor = menos iteraciones del loop interno. |
+| `Aura Max Layers` | `5` | Menos capas = menos renders de modelo = más FPS, aura más fina. |
+| `Aura Layer Step` | `0.05` | Paso mayor = menos iteraciones del loop interno. |
 
 ### 3. Cache de ResourceLocation — `RLCache.java`
 El path de render construía la misma ruta de textura cada frame vía concatenación de
@@ -88,6 +90,7 @@ Toggle maestro en `ConfigDBCClient` para apagar de una toda la pila visual cara.
 | `Low Spec Mode` | **`true`** | Cuando ON, fuerza OFF: bloom, outlines, auras del addon y partículas custom, ignorando los toggles individuales. Ponlo en `false` para que manden los toggles por feature (defaults = vanilla on). |
 | `Enable Auras` | `true` | Off global de auras del addon (no afecta auras DBC nativas). Solo aplica con Low Spec Mode OFF. |
 | `Enable Custom Particles` | `true` | Off de partículas custom del addon. Con OFF, caen al render base de DBC (sin cola del addon). Solo aplica con Low Spec Mode OFF. |
+| `Custom Particle Max Count` | `0` | Cap por-entidad de partículas custom encoladas. Las extra caen al render base DBC. `0` = sin cap. Alternativa intermedia a apagarlas del todo. |
 
 Gates (`ConfigDBCClient`): `bloomEnabled()`, `outlinesEnabled()`, `aurasEnabled()`,
 `particlesEnabled()` = `!LowSpecMode && Enable<X>`. Usados en:
@@ -100,6 +103,12 @@ Gates (`ConfigDBCClient`): `bloomEnabled()`, `outlinesEnabled()`, `aurasEnabled(
 Botón **Low Spec Mode** añadido al GUI de inventario DBC (junto a Bloom/Outlines/Shaders).
 Este build arranca con Low Spec Mode **ON** por default (pensado para PCs de muy bajos
 recursos); el usuario lo apaga si su equipo aguanta.
+
+**Skip del stencil buffer (fase 2).** `PlayerDataUtil.useStencilBuffer` decidía montar
+el stencil buffer si existían *datos* de aura/outline, aunque no se renderizaran. Ahora
+respeta los gates: en low-spec (sin aura DBC nativa) devuelve `false` → se salta todo el
+setup de stencil **y** el `renderPlayer`/`renderNPC` del addon se cortan temprano. Las
+auras DBC nativas (`EntityAura2`) siguen contando, así que su stencil se mantiene.
 
 ### 5. Outline — gate de distancia (`OutlineRenderer.java`)
 El outline es un pase extra caro (varios `model.render()` + 2 pasos de shader + bloom
@@ -118,6 +127,13 @@ no afecta drivers.
 ---
 
 ## Cómo ajustar
-Los campos son `public static`. Para perfiles de calidad/rendimiento se pueden
-exponer en `ConfigDBCClient` (pendiente) o setear desde otro punto de carga del mod.
-Para volver al look vanilla del bloom: `BLOOM_RES_SHIFT = 0`.
+Todo se controla desde el config `Rendering` (archivo `CustomNpcPlus/dbc/client.cfg`) o,
+para los toggles, desde el GUI de inventario DBC. Resumen:
+
+- **PC patata:** dejar `Low Spec Mode = true` (default). Todo lo caro off.
+- **PC media:** `Low Spec Mode = false` + subir `Bloom Resolution Shift`, bajar
+  `Max Bloom Levels` / `Aura Max Layers`, subir `Aura Layer Step`, poner
+  `Outline Max Distance` corto y/o `Custom Particle Max Count` bajo.
+- **PC fuerte:** `Low Spec Mode = false` y valores vanilla.
+
+Para volver al look vanilla del bloom: `Bloom Resolution Shift = 0`.

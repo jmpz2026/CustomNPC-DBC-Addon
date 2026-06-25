@@ -46,9 +46,21 @@ public class ConfigDBCClient {
     public static boolean EnableAuras = true;
     public static Property EnableCustomParticlesProperty;
     public static boolean EnableCustomParticles = true;
+    public static Property CustomParticleMaxCountProperty;
+    public static int CustomParticleMaxCount = 0;
 
     public static Property LowSpecModeProperty;
     public static boolean LowSpecMode = true;
+
+    // Quality tunables (only relevant when the feature is on, i.e. Low Spec Mode off).
+    public static Property BloomResShiftProperty;
+    public static int BloomResShift = 1;
+    public static Property MaxBloomLevelsProperty;
+    public static int MaxBloomLevels = 6;
+    public static Property AuraMaxLayersProperty;
+    public static int AuraMaxLayers = 5;
+    public static Property AuraLayerStepProperty;
+    public static float AuraLayerStep = 0.05f;
 
     // --- Low-spec gates ---------------------------------------------------
     // When LowSpecMode is on, the heavy visual stack is forced off regardless
@@ -68,6 +80,11 @@ public class ConfigDBCClient {
 
     public static boolean particlesEnabled() {
         return !LowSpecMode && EnableCustomParticles;
+    }
+
+    /** True if another addon particle can be queued given the current per-entity count. */
+    public static boolean particleQueueHasRoom(int currentSize) {
+        return CustomParticleMaxCount <= 0 || currentSize < CustomParticleMaxCount;
     }
 
     public static Property FirstPerson3DAuraOpacityProperty;
@@ -130,8 +147,20 @@ public class ConfigDBCClient {
             EnableCustomParticlesProperty = config.get(RENDERING, "Enable Custom Particles", true, "Enables addon custom particle rendering");
             EnableCustomParticles = EnableCustomParticlesProperty.getBoolean(true);
 
+            CustomParticleMaxCountProperty = config.get(RENDERING, "Custom Particle Max Count", 0, "Per-entity cap on queued addon particles. Extra particles fall back to base DBC rendering." + "\n0 = no cap (default). Lower this on weak GPUs instead of disabling particles entirely." + "\n(Min: 0)");
+            CustomParticleMaxCount = Math.max(0, CustomParticleMaxCountProperty.getInt(0));
+
             LowSpecModeProperty = config.get(RENDERING, "Low Spec Mode", true, "Master switch for ultra low-end PCs." + "\nWhen ON, the heavy visual stack (bloom, outlines, addon auras, custom particles)" + "\nis forced OFF regardless of the individual toggles above." + "\nTurn OFF to let the per-feature toggles take over." + "\nDefault ON for this performance-focused build.");
             LowSpecMode = LowSpecModeProperty.getBoolean(true);
+
+            BloomResShiftProperty = config.get(RENDERING, "Bloom Resolution Shift", 1, "Extra downscale of the whole bloom mip chain. 0 = half-res (vanilla look), 1 = quarter-res (~4x fewer bloom pixels, default). Higher = cheaper/softer." + "\n(Min: 0, Max: 4)");
+            BloomResShift = Math.max(0, Math.min(4, BloomResShiftProperty.getInt(1)));
+            MaxBloomLevelsProperty = config.get(RENDERING, "Max Bloom Levels", 6, "Hard cap on bloom mip levels processed. Fewer = cheaper, smaller glow radius." + "\n(Min: 1, Max: 8)");
+            MaxBloomLevels = Math.max(1, Math.min(8, MaxBloomLevelsProperty.getInt(6)));
+            AuraMaxLayersProperty = config.get(RENDERING, "Aura Max Layers", 5, "Aura layer count. Fewer = fewer model renders = more FPS, thinner aura. Vanilla = 5." + "\n(Min: 1, Max: 5)");
+            AuraMaxLayers = Math.max(1, Math.min(5, AuraMaxLayersProperty.getInt(5)));
+            AuraLayerStepProperty = config.get(RENDERING, "Aura Layer Step", 0.05, "Aura inner-loop step. Bigger = fewer iterations = more FPS. Vanilla = 0.05." + "\n(Min: 0.05, Max: 1.0)");
+            AuraLayerStep = (float) Math.max(0.05, Math.min(1.0, AuraLayerStepProperty.getDouble(0.05)));
 
             FirstPerson3DAuraOpacityProperty = config.get(RENDERING, "First person 3D Aura Opacity", 100, "The opacity of the first person 3D Aura." + "\nModifying this makes it so auras on other players render normally without blinding you" + "\n(Min: 0, Max: 100)");
             FirstPerson3DAuraOpacity = Math.max(Math.min(100, FirstPerson3DAuraOpacityProperty.getInt(100)), 0);

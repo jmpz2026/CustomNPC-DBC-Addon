@@ -49,10 +49,8 @@ public class AuraRenderer extends RenderDBC {
     // Reused across frames to avoid allocating a Random per vertex (was new Random()
     // in the inner aura loop -> ~100 allocations per aura per frame).
     private static final Random SHARED_RANDOM = new Random();
-    // Aura density knobs. Fewer layers / bigger step = fewer model renders = more FPS,
-    // at the cost of a slightly thinner aura. Vanilla = 5 and 0.05f.
-    public static int AURA_MAX_LAYERS = 5;
-    public static float AURA_LAYER_STEP = 0.05f;
+    // Aura density knobs now live in ConfigDBCClient (AuraMaxLayers / AuraLayerStep),
+    // read per-frame so users can tune without recompiling. Vanilla = 5 and 0.05f.
 
 
     public AuraRenderer() {
@@ -188,14 +186,15 @@ public class AuraRenderer extends RenderDBC {
         byte race = aura.auraData.getRace();
         byte state = aura.auraData.getState();
 
-        int maxLayers = AURA_MAX_LAYERS;
+        int maxLayers = ConfigDBCClient.AuraMaxLayers;
+        float layerStep = ConfigDBCClient.AuraLayerStep;
         // Bind once: the inner loop re-bound the same texture every iteration.
         this.renderManager.renderEngine.bindTexture(aura.text1);
         for (float i = 1; i < maxLayers + 1; ++i) {
             float layerPercent = i / maxLayers;
             float layerTemp = layerPercent * 20f;
 
-            for (float j = 1; j < 2; j += AURA_LAYER_STEP) {
+            for (float j = 1; j < 2; j += layerStep) {
                 model.auraModel.offsetY = -(i / maxLayers) * aura.height;
                 model.auraModel.offsetZ = layerTemp < 7F ? 0.2F - 1 * 0.075F : 0.35F + (1 - 7.0F) * 0.055F;
                 model.auraModel.rotateAngleX = (0.9926646F - layerTemp * 0.01F) * (1 - i / maxLayers) * (1 - ((float) Math.pow(i / maxLayers, 2)));

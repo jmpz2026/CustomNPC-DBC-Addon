@@ -3,6 +3,7 @@ package kamkeel.npcdbc.util;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.npcdbc.client.OptifineHelper;
+import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.controllers.AuraController;
 import kamkeel.npcdbc.controllers.FormController;
 import kamkeel.npcdbc.data.IAuraData;
@@ -150,18 +151,20 @@ public class PlayerDataUtil {
             return true;
         }
 
+        // Only the addon stack respects the low-spec gates; base DBC auras
+        // (EntityAura2 queues) always count so their stencil setup is kept.
         boolean auraOn = false, outlineOn = false, particlesOn = false, use = false;
         if (entity instanceof EntityPlayer) {
             DBCData data = (DBCData) dat;
-            auraOn = data.auraEntity != null;
-            outlineOn = data.getOutline() != null;
-            particlesOn = !data.particleRenderQueue.isEmpty();
+            auraOn = data.auraEntity != null && ConfigDBCClient.aurasEnabled();
+            outlineOn = data.getOutline() != null && ConfigDBCClient.outlinesEnabled();
+            particlesOn = !data.particleRenderQueue.isEmpty() && ConfigDBCClient.particlesEnabled();
             use = auraOn || outlineOn || particlesOn;
         } else if (entity instanceof EntityNPCInterface) {
             DBCDisplay data = (DBCDisplay) dat;
-            auraOn = data.auraEntity != null;
-            outlineOn = data.getOutline() != null;
-            particlesOn = !data.particleRenderQueue.isEmpty();
+            auraOn = data.auraEntity != null && ConfigDBCClient.aurasEnabled();
+            outlineOn = data.getOutline() != null && ConfigDBCClient.outlinesEnabled();
+            particlesOn = !data.particleRenderQueue.isEmpty() && ConfigDBCClient.particlesEnabled();
             use = auraOn || outlineOn || particlesOn || !data.dbcSecondaryAuraQueue.isEmpty() || !data.dbcAuraQueue.isEmpty();
         }
 
