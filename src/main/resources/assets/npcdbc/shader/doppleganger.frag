@@ -4,7 +4,7 @@ varying vec2 texcoord;
 varying vec3 vertPos;
 
 uniform sampler2D bgl_RenderedTexture;
-uniform int time; // Passed in, see ShaderHelper.java
+uniform float time; // Passed in, see ShaderHelper.java (uploaded via glUniform1f)
 
 uniform float grainIntensity; // Passed in via Callback
 
@@ -16,10 +16,9 @@ void main() {
     vec4 color = texture2D(bgl_RenderedTexture, texcoord);
     float gs = (color.r + color.g + color.b) / 50.0;
     
-    float r = gs + rand(texcoord) * grainIntensity;
-    float g = gs + rand(texcoord) * grainIntensity;
-    float b = gs + rand(texcoord) * grainIntensity;
-    
-    gl_FragColor = vec4(r, g, b, color.a);
+    // perf: rand(texcoord) was identical across all 3 channels -> compute once
+    float v = gs + rand(texcoord) * grainIntensity;
+
+    gl_FragColor = vec4(v, v, v, color.a);
 
 }

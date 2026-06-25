@@ -18,24 +18,28 @@ uniform sampler2D cross;
 
 
 uniform vec3 center;
-const float frameWidth = 1./4;
-const float aura[] = float[](0, 0.5, 0.7, 0.97);
+const float frameWidth = 1.0 / 4.0;
+// perf/compat: plain consts instead of a GLSL array constructor (float[](...)),
+// which some old/embedded GL2.1 drivers reject even at #version 120.
+const float auraT1 = 0.5;
+const float auraT2 = 0.7;
+const float auraT3 = 0.97;
 
 vec4 adjustColor(vec4 color){
     vec3 newColor = color.rrr;
-    if (color.r >=aura[3]){
+    if (color.r >= auraT3){
         newColor *= color1.rgb;
         newColor *= color1.a;
 
-    } else if (color.r >=aura[2]){
+    } else if (color.r >= auraT2){
         newColor *= color2.rgb;
         newColor *= color2.a;
 
-    } else if (color.r > aura[1]){
+    } else if (color.r > auraT1){
         newColor *= color3.rgb;
         newColor *=color3.a;
 
-    } else if (color.r > 0){
+    } else if (color.r > 0.0){
         newColor *= color4.rgb;
         newColor *= color4.a;
     }
@@ -53,18 +57,18 @@ void main() {
 
     float absPitch = abs(pitch);
 
-    if (absPitch > 60){
+    if (absPitch > 60.0){
         float factor = 0.0;
         vec4 currentCross = adjustColor(texture2D(cross, texCoord));
         vec4 nextCross = adjustColor(texture2D(cross, vec2(texCoord.x +frameWidth, texCoord.y)));
         vec4 crossColor = mix(currentCross, nextCross, fract(speed));
 
-        factor = (absPitch -60) / 30;
-        factor = clamp(factor * 2, 0.0, 1.0);
+        factor = (absPitch - 60.0) / 30.0;
+        factor = clamp(factor * 2.0, 0.0, 1.0);
 
-        color = mix(color * max(0, (1- factor)), crossColor , factor);
+        color = mix(color * max(0.0, (1.0 - factor)), crossColor , factor);
 
     }
 
-    gl_FragColor = vec4(color.rgb, 1);
+    gl_FragColor = vec4(color.rgb, 1.0);
 }

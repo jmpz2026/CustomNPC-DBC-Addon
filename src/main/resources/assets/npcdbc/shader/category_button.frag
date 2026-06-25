@@ -1,6 +1,6 @@
 #version 120
 
-uniform int time; // Passed in, see ShaderHelper.java
+uniform float time; // Passed in, see ShaderHelper.java (uploaded via glUniform1f)
 
 uniform float heightMatch; // Passed in via Callback
 uniform sampler2D image;
@@ -13,6 +13,6 @@ void main() {
     float maskgs = (maskColor.r + maskColor.g + maskColor.b) / 3.0;
 
     if(maskgs <= heightMatch)
-    	gl_FragColor = vec4(color.r, color.g, color.b, color.a);
-    else gl_FragColor = vec4(0, 0, 0, color.a);
+    	gl_FragColor = color;
+    else gl_FragColor = vec4(0.0, 0.0, 0.0, color.a);
 }

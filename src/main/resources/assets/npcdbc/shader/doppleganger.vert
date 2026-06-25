@@ -1,12 +1,12 @@
 #version 120
 
 varying vec2 texcoord;
-uniform int time; // Passed in, see ShaderHelper.java
+uniform float time; // Passed in, see ShaderHelper.java (uploaded via glUniform1f)
 
 uniform float disfiguration; // Passed in via Callback
 
 float rand(vec2 co) {
-   return (fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453) - 0.5) * 2;
+   return (fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453) - 0.5) * 2.0;
 }
 
 void main() {

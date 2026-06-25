@@ -33,7 +33,7 @@ void main() {
     color = mix(innerColor, outerColor, t).rgb;
 
 
-    float alphaGlow =  max(noise.r * 2, 0.5) + sin(time*throbSpeed) * 0.2;
+    float alphaGlow =  max(noise.r * 2.0, 0.5) + sin(time*throbSpeed) * 0.2;
 
     // vec4 mainSample = texture2D(mainTexture,texCoord);
     // if(mainSample.a < 0.5)
