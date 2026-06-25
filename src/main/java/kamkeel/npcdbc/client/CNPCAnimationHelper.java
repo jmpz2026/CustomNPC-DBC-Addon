@@ -6,6 +6,7 @@ import JinRyuu.JRMCore.JRMCoreHDBC;
 import JinRyuu.JRMCore.client.config.jrmc.JGConfigClientSettings;
 import JinRyuu.JRMCore.i.ExtendedPlayer;
 import JinRyuu.JRMCore.server.config.dbc.JGConfigRaces;
+import kamkeel.npcdbc.client.utils.RLCache;
 import kamkeel.npcdbc.mixins.late.INPCDisplay;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -594,14 +595,14 @@ public class CNPCAnimationHelper {
                 boolean isBaseMajin = state == 1;
                 boolean isPureMajin = state == 3 && JGConfigRaces.CONFIG_MAJIN_PURE_PINK_SKIN;
                 bodyColorMain = isBaseMajin ? 12561588 : (isPureMajin ? 16757199 : bodyColorMain);
-                bodySkin = new ResourceLocation("jinryuudragonbc:cc/majin/" + (gender == 1 ? "f" : "") + "majin.png");
+                bodySkin = RLCache.get("jinryuudragonbc:cc/majin/" + (gender == 1 ? "f" : "") + "majin.png");
                 renderBody(mc, modelMain, bodySkin, bodyColorMain, player);
 
                 String[] absorptionData = JRMCoreH.data(player.getCommandSenderName(), 13, "0;0;0;0,0,0+0").split(";");
                 String[] absorptionVisuals = absorptionData.length > 3 ? absorptionData[3].split(",")[1].split("\\+") : new String[]{"0"};
                 int absorbedRace = Integer.parseInt(absorptionVisuals[0]);
                 if (JRMCoreH.isRaceArcosian(absorbedRace) || JRMCoreH.isRaceNamekian(absorbedRace)) {
-                    bodySkin = new ResourceLocation("jinryuudragonbc:cc/majin/" + (gender == 1 ? "f" : "") + "majin_" + (JRMCoreH.isRaceArcosian(absorbedRace) ? "arco" : "namek") + ".png");
+                    bodySkin = RLCache.get("jinryuudragonbc:cc/majin/" + (gender == 1 ? "f" : "") + "majin_" + (JRMCoreH.isRaceArcosian(absorbedRace) ? "arco" : "namek") + ".png");
                     renderBody(mc, modelMain, bodySkin, bodyColorMain, player);
                 }
                 renderDefaultSkin(mc, clientPlayer, modelMain, skinData, isJHDS, skinType, isSaiOozar);
@@ -682,10 +683,10 @@ public class CNPCAnimationHelper {
             bodyC1 = 15524763;
             bodyC2 = 12854822;
         }
-        renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/nam/0nam" + playerSpecial + ".png"), bodyCM, player);
-        renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/nam/1nam" + playerSpecial + ".png"), bodyC1, player);
-        renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/nam/2nam" + playerSpecial + ".png"), bodyC2, player);
-        renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/nam/3nam" + playerSpecial + ".png"), getDefaultColor(), player);
+        renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/nam/0nam" + playerSpecial + ".png"), bodyCM, player);
+        renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/nam/1nam" + playerSpecial + ".png"), bodyC1, player);
+        renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/nam/2nam" + playerSpecial + ".png"), bodyC2, player);
+        renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/nam/3nam" + playerSpecial + ".png"), getDefaultColor(), player);
     }
 
     /**
@@ -712,11 +713,11 @@ public class CNPCAnimationHelper {
         }
         short[] transFrSkn = JRMCoreH.TransFrSkn;
         String genderPrefix = gender == 1 ? "f" : "m";
-        renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/arc/" + genderPrefix + "/0A" + transFrSkn[state] + playerSpecial + ".png"), bodyCM, player);
-        renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/arc/" + genderPrefix + "/1A" + transFrSkn[state] + playerSpecial + ".png"), bodyC1, player);
-        renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/arc/" + genderPrefix + "/2A" + transFrSkn[state] + playerSpecial + ".png"), bodyC2, player);
-        renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/arc/" + genderPrefix + "/3A" + transFrSkn[state] + playerSpecial + ".png"), bodyC3, player);
-        renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/arc/" + genderPrefix + "/4A" + transFrSkn[state] + playerSpecial + ".png"), getDefaultColor(), player);
+        renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/arc/" + genderPrefix + "/0A" + transFrSkn[state] + playerSpecial + ".png"), bodyCM, player);
+        renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/arc/" + genderPrefix + "/1A" + transFrSkn[state] + playerSpecial + ".png"), bodyC1, player);
+        renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/arc/" + genderPrefix + "/2A" + transFrSkn[state] + playerSpecial + ".png"), bodyC2, player);
+        renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/arc/" + genderPrefix + "/3A" + transFrSkn[state] + playerSpecial + ".png"), bodyC3, player);
+        renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/arc/" + genderPrefix + "/4A" + transFrSkn[state] + playerSpecial + ".png"), getDefaultColor(), player);
     }
 
     /**
@@ -740,12 +741,12 @@ public class CNPCAnimationHelper {
      */
     private static void renderDefaultOrSaiyan(Minecraft mc, EntityClientPlayerMP clientPlayer, ModelBiped model, EntityPlayer player, Object skinData, boolean isJHDS, int skinType, boolean isSaiOozar, int gender, int bodyType, int state, int race, int bodyCM, int bodyC1, boolean isLegendary) throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException {
         if (isSaiOozar) {
-            renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/oozaru1.png"), skinType != 0 ? bodyCM : 11374471, player);
+            renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/oozaru1.png"), skinType != 0 ? bodyCM : 11374471, player);
             int tailColor = race != 2 && bodyType == 0 ? 6498048 : bodyType;
             int oozaruColor = state != 0 && state != 7 ? (isLegendary ? 10092390 : 16574610) : (skinType == 1 ? bodyC1 : tailColor);
-            renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/oozaru2.png"), oozaruColor, player);
+            renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/oozaru2.png"), oozaruColor, player);
         } else if (skinType != 0) {
-            renderBody(mc, model, new ResourceLocation("jinryuumodscore:cc/" + (gender == 1 ? "f" : "") + "hum.png"), bodyCM, player);
+            renderBody(mc, model, RLCache.get("jinryuumodscore:cc/" + (gender == 1 ? "f" : "") + "hum.png"), bodyCM, player);
         }
         renderDefaultSkin(mc, clientPlayer, model, skinData, isJHDS, skinType, isSaiOozar);
         if (state == 14) {
@@ -755,7 +756,7 @@ public class CNPCAnimationHelper {
             if (JRMCoreH.rSai(race) && finalColor == 6498048) {
                 finalColor = JRMCoreH.isAprilFoolsModeOn() ? 13292516 : 14292268;
             }
-            renderBody(mc, model, new ResourceLocation("jinryuudragonbc:cc/ss4" + (skinType == 0 ? "a" : "b") + ".png"), finalColor, player);
+            renderBody(mc, model, RLCache.get("jinryuudragonbc:cc/ss4" + (skinType == 0 ? "a" : "b") + ".png"), finalColor, player);
         }
     }
 
@@ -791,7 +792,7 @@ public class CNPCAnimationHelper {
             for (int i = 0; i < bruiseTextures.length; i++) {
                 if (healthPercentage < thresholds[i]) {
                     GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-                    mc.getTextureManager().bindTexture(new ResourceLocation(bruiseTextures[i]));
+                    mc.getTextureManager().bindTexture(RLCache.get(bruiseTextures[i]));
                     renderLimbs();
                 }
             }
@@ -818,7 +819,7 @@ public class CNPCAnimationHelper {
             ItemArmor armorItem = (ItemArmor) armorStack.getItem();
             GL11.glPushMatrix();
             String dbcArmorTexture = armorItem.getArmorTexture(armorStack, player, 2, null);
-            ResourceLocation armorTexture = dbcArmorTexture != null ? new ResourceLocation(dbcArmorTexture.replace("jbra", "").replace("_dam", "")) : RenderBiped.getArmorResource(player, armorStack, 1, null);
+            ResourceLocation armorTexture = dbcArmorTexture != null ? RLCache.get(dbcArmorTexture.replace("jbra", "").replace("_dam", "")) : RenderBiped.getArmorResource(player, armorStack, 1, null);
             mc.getTextureManager().bindTexture(armorTexture);
 
             if (animationId > -1) {
