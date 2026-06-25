@@ -8,6 +8,7 @@ import kamkeel.npcdbc.client.ClientConstants;
 import kamkeel.npcdbc.client.model.part.hair.DBCHair;
 import kamkeel.npcdbc.client.shader.ShaderHelper;
 import kamkeel.npcdbc.client.shader.ShaderResources;
+import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.data.dbcdata.DBCData;
@@ -27,6 +28,22 @@ import static kamkeel.npcdbc.client.shader.ShaderHelper.*;
 import static org.lwjgl.opengl.GL11.*;
 
 public class OutlineRenderer {
+    /**
+     * Distance gate for the outline pass. The outline is an extra, costly render pass
+     * (several model renders + 2 shader passes) that is barely visible far from the
+     * camera. When {@link ConfigDBCClient#OutlineMaxDistance} is set (> 0), skip the
+     * pass for entities beyond that distance. 0 = no limit (default, unchanged).
+     */
+    public static boolean withinOutlineDistance(net.minecraft.entity.Entity entity) {
+        int max = ConfigDBCClient.OutlineMaxDistance;
+        if (max <= 0)
+            return true;
+        net.minecraft.entity.Entity viewer = net.minecraft.client.Minecraft.getMinecraft().renderViewEntity;
+        if (viewer == null)
+            return true;
+        return entity.getDistanceSqToEntity(viewer) <= (double) max * max;
+    }
+
     public static void renderOutline(RenderPlayerJBRA render, Outline outline, EntityPlayer player, float partialTicks, boolean isArm) {
         ClientConstants.renderingOutline = true;
         DBCData data = DBCData.get(player);

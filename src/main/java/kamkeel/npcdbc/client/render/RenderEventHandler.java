@@ -164,7 +164,7 @@ public class RenderEventHandler {
         ////////////////////////////////////////
         //Outline
         Outline outline = data.getOutline();
-        if (outline != null && ConfigDBCClient.EnableOutlines && !isItem) {
+        if (outline != null && ConfigDBCClient.EnableOutlines && !isItem && OutlineRenderer.withinOutlineDistance(player)) {
             startBlooming(ClientConstants.renderingGUI);
             glStencilFunc(GL_GREATER, player.getEntityId() % 256, 0xFF);  // Test stencil value
             glStencilMask(0xff);

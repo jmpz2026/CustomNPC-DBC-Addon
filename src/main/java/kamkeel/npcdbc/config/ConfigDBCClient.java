@@ -36,6 +36,8 @@ public class ConfigDBCClient {
 
     public static Property EnableOutlinesProperty;
     public static boolean EnableOutlines = true;
+    public static Property OutlineMaxDistanceProperty;
+    public static int OutlineMaxDistance = 0;
     public static Property EnableShadersProperty;
     public static boolean EnableShaders = true;
     public static Property EnableBloomProperty;
@@ -85,6 +87,9 @@ public class ConfigDBCClient {
 
             EnableOutlinesProperty = config.get(RENDERING, "Enable Outlines", true, "Enables outlines for players and NPCs");
             EnableOutlines = EnableOutlinesProperty.getBoolean(true);
+
+            OutlineMaxDistanceProperty = config.get(RENDERING, "Outline Max Distance", 0, "Max distance (in blocks) at which outlines are rendered." + "\nOutlines are a costly extra render pass and are barely visible far away." + "\n0 = no limit (always render, default behavior)." + "\n(Min: 0)");
+            OutlineMaxDistance = Math.max(0, OutlineMaxDistanceProperty.getInt(0));
 
             EnableShadersProperty = config.get(RENDERING, "Enable Shaders", true, "Enables the use of shaders when rendering");
             EnableShaders = EnableShadersProperty.getBoolean(true);
