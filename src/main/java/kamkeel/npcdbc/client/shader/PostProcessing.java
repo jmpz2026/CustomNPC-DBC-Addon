@@ -322,6 +322,17 @@ public class PostProcessing {
     }
 
     public static void init(int width, int height) {
+        // Low Spec / heavy visual stack off -> never allocate the RGBA16F + MRT
+        // framebuffers. That allocation (not just the bloom pass) is what breaks
+        // old GPUs lacking float textures / multiple draw buffers. Skipping it
+        // leaves the mod in the same safe state as "FBOs unsupported", and every
+        // consumer (startBlooming/bloom/postProcess) already guards on bloomSupported.
+        if (ConfigDBCClient.LowSpecMode
+            || (!ConfigDBCClient.bloomEnabled() && !ConfigDBCClient.aurasEnabled())) {
+            bloomSupported = false;
+            return;
+        }
+
         hasInitialized = true;
 
         // Apply quality tunables from config (client-side only entry point).
