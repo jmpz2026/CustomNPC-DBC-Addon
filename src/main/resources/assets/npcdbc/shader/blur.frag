@@ -5,8 +5,9 @@ uniform vec2 u_resolution;
 uniform sampler2D mainTexture;
 uniform int horizontal;
 uniform float blurIntensity;
-const int kernelSize = 5;
-const float weights[11] = float[](0.0093, 0.028002, 0.065984, 0.121703, 0.175713, 0.198596, 0.175713, 0.121703, 0.065984, 0.028002, 0.0093);
+// NpcDbcResu perf: 7-tap gaussian (was 11-tap). ~36% fewer texture fetches per blur pass.
+const int kernelSize = 3;
+const float weights[7] = float[](0.071303, 0.131514, 0.189879, 0.214607, 0.189879, 0.131514, 0.071303);
 
 
 void main() {

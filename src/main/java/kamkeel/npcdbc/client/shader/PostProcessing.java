@@ -40,6 +40,15 @@ public class PostProcessing {
     public static int blankTexture;
 
     public static int BLOOM_BUFFERS_LENGTH = 10;
+
+    // === NpcDbcResu performance tuning ===
+    // Extra downscale applied uniformly to the whole bloom mip chain (buffer
+    // allocation in init + every viewport in bloom). 0 = vanilla half-res base,
+    // 1 = quarter-res base (~4x fewer bloom pixels, slightly softer glow).
+    public static int BLOOM_RES_SHIFT = 1;
+    // Hard cap on bloom mip levels processed. init also self-limits by mip size.
+    public static int MAX_BLOOM_LEVELS = 6;
+
     public static int[] bloomBuffers = new int[BLOOM_BUFFERS_LENGTH];
     public static int[] bloomTextures = new int[bloomBuffers.length];
     public static int[] bloomTextures2 = new int[bloomBuffers.length];
@@ -151,15 +160,16 @@ public class PostProcessing {
         glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[0]);
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
-        glViewport(0, 0, width >> 1, height >> 1);
+        glViewport(0, 0, width >> (1 + BLOOM_RES_SHIFT), height >> (1 + BLOOM_RES_SHIFT));
         useShader(downsample13);
         renderQuad(MAIN_BLOOM_TEXTURE, 0, 0, width, height);
         blurFilter(bloomTextures[0], 2.5f, 0, 0, width, height);
         int downSamples = 0;
-        for (int i = 0; i < bloomBuffers.length; i++) {
+        int maxLevels = Math.min(bloomBuffers.length, MAX_BLOOM_LEVELS);
+        for (int i = 0; i < maxLevels; i++) {
             if (bloomBuffers[i] <= 0 || i + 1 >= bloomBuffers.length)
                 continue;
-            int mipWidth = width >> (i + 2), mipHeight = height >> (i + 2);
+            int mipWidth = width >> (i + 2 + BLOOM_RES_SHIFT), mipHeight = height >> (i + 2 + BLOOM_RES_SHIFT);
             glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[i + 1]);
             glViewport(0, 0, mipWidth, mipHeight);
             useShader(downsample13);
@@ -170,7 +180,7 @@ public class PostProcessing {
         // Up sampling the mip chain
         for (int i = downSamples; i > 0; i--) {
             int lower = bloomTextures[i];
-            int mipWidth = width >> (i), mipHeight = height >> (i);
+            int mipWidth = width >> (i + BLOOM_RES_SHIFT), mipHeight = height >> (i + BLOOM_RES_SHIFT);
             glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[i - 1]);
 
             drawToBuffers(2);
@@ -353,9 +363,10 @@ public class PostProcessing {
         drawToBuffers(0, 2);
         glClearColor(0, 0, 0, 1f);
         glClear(GL_COLOR_BUFFER_BIT);
-        for (int i = 0; i < bloomBuffers.length; i++) {
-            int mipWidth = width >> (i + 1);
-            int mipHeight = height >> (i + 1);
+        int maxInitLevels = Math.min(bloomBuffers.length, MAX_BLOOM_LEVELS);
+        for (int i = 0; i < maxInitLevels; i++) {
+            int mipWidth = width >> (i + 1 + BLOOM_RES_SHIFT);
+            int mipHeight = height >> (i + 1 + BLOOM_RES_SHIFT);
             if (mipWidth < 15 || mipHeight < 7)
                 break;
 
