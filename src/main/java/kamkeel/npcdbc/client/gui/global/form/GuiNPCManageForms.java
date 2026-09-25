@@ -154,7 +154,7 @@ public class GuiNPCManageForms extends GuiNPCInterface2 implements ICustomScroll
             display = form.display;
             visualDisplay.formID = form.id;
             if (form.race() != -1)
-                visualDisplay.race = (byte) form.race();
+                visualDisplay.race = (byte) (DBCRace.isExtraRace(form.race()) ? DBCRace.HUMAN : form.race());
             else
                 visualDisplay.race = (byte) originalRace;
 
