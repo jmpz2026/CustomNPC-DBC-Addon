@@ -1,5 +1,7 @@
 package kamkeel.npcdbc.client.gui.global.form;
 
+import JinRyuu.JRMCore.JRMCoreH;
+import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.client.gui.component.SubGuiSelectForm;
 import kamkeel.npcdbc.client.gui.component.SubGuiSetParents;
 import kamkeel.npcdbc.controllers.FormController;
@@ -36,7 +38,7 @@ public class SubGuiFormGeneral extends SubGuiInterface implements ISubGuiListene
         addTextField(new GuiNpcTextField(1, this, this.fontRendererObj, guiLeft + 36, y, 200, 20, form.name));
         getTextField(1).setMaxStringLength(40);
         addLabel(new GuiNpcLabel(1, "gui.name", guiLeft + 4, y + 5));
-        addButton(new GuiNpcButton(3, guiLeft + 260, y, 95, 20, new String[]{"general.allRaces", "Human", "general.allSaiyans", "Pure Saiyan", "Half-Saiyan", "Namekian", "Arcosian", "Majin"}, getRaceIndex(form.getRace())));
+        addButton(new GuiNpcButton(3, guiLeft + 260, y, 95, 20, raceButtonNames(), getRaceIndex(form.getRace())));
 
         addLabel(new GuiNpcLabel(0, "ID", guiLeft + 238, y + 1));
         addLabel(new GuiNpcLabel(2, form.id + "", guiLeft + 238, y + 11));
@@ -158,7 +160,20 @@ public class SubGuiFormGeneral extends SubGuiInterface implements ISubGuiListene
 
     }
 
+    /** Fixed entries, then one per extra race (DbrRazas) in race order. */
+    private static final int FIRST_EXTRA_BUTTON = 8;
+
+    private static String[] raceButtonNames() {
+        java.util.List<String> names = new java.util.ArrayList<>(java.util.Arrays.asList(
+            "general.allRaces", "Human", "general.allSaiyans", "Pure Saiyan", "Half-Saiyan", "Namekian", "Arcosian", "Majin"));
+        for (int race = DBCRace.KAIOSHIN; race < JRMCoreH.Races.length; race++)
+            names.add(JRMCoreH.Races[race]);
+        return names.toArray(new String[0]);
+    }
+
     private int getRaceButton(int button) {
+        if (button >= FIRST_EXTRA_BUTTON)
+            return DBCRace.KAIOSHIN + button - FIRST_EXTRA_BUTTON;
         switch (button) {
             case 0:
                 return -1;
@@ -182,6 +197,8 @@ public class SubGuiFormGeneral extends SubGuiInterface implements ISubGuiListene
     }
 
     private int getRaceIndex(int race) {
+        if (DBCRace.isExtraRace(race))
+            return FIRST_EXTRA_BUTTON + race - DBCRace.KAIOSHIN;
         switch (race) {
             case -1:
                 return 0;

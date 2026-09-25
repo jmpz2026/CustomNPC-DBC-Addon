@@ -17,6 +17,7 @@ import kamkeel.npcdbc.CustomNpcPlusDBC;
 import kamkeel.npcdbc.config.ConfigDBCEffects;
 import kamkeel.npcdbc.config.ConfigDBCGameplay;
 import kamkeel.npcdbc.config.ConfigDBCGeneral;
+import kamkeel.npcdbc.compat.ExtraRaces;
 import kamkeel.npcdbc.constants.DBCAttribute;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.DBCRace;
@@ -228,7 +229,11 @@ public abstract class MixinJRMCoreH {
                 result = JRMCoreH.getAttributeMajin(player, currAttributes, attribute, state, skillX, false, mysticLvl, isFused, false, powerType, false, "");
                 break;
             default:
-                result = currAttributes[attribute];
+                // Extra races (DbrRazas) have no formula here: ask DbrRazas, which also
+                // neutralizes the base multiplier itself (replaceOldMulti has no table for them).
+                result = DBCRace.isExtraRace(race)
+                    ? ExtraRaces.getAttribute(player, currAttributes, attribute, state, race, skillX, mysticLvl, powerType, !form.stackable.vanillaStackable)
+                    : currAttributes[attribute];
         }
         if (!form.stackable.vanillaStackable && oldValue > 0) {
             resetOldMulti(race, attribute, oldValue);
@@ -362,7 +367,10 @@ public abstract class MixinJRMCoreH {
     }
 
     private static void resetOldMulti(int race, int attribute, float oldValue) {
-        float[] array = getRightMultiArray(race)[0];
+        float[][] table = getRightMultiArray(race);
+        if (table == null)
+            return;
+        float[] array = table[0];
         if (attribute < 0)
             attribute = 0;
         if (attribute >= array.length)
@@ -372,7 +380,10 @@ public abstract class MixinJRMCoreH {
     }
 
     private static float replaceOldMulti(int race, int attribute) {
-        float[] array = getRightMultiArray(race)[0];
+        float[][] table = getRightMultiArray(race);
+        if (table == null)
+            return -1f; // extra race: no table, the caller skips resetOldMulti
+        float[] array = table[0];
         if (attribute < 0)
             attribute = 0;
         if (attribute >= array.length)
@@ -916,16 +927,7 @@ public abstract class MixinJRMCoreH {
     }
 
     private static boolean isDBCFormDrainCancelled() {
-        EntityPlayer currentJRMCTickPlayer = CommonProxy.getCurrentJRMCTickPlayer();
-        if (currentJRMCTickPlayer == null) {
-            return false;
-        }
-        PlayerDBCInfo info = PlayerDataUtil.getDBCInfo(currentJRMCTickPlayer);
-        if (!info.isInCustomForm()) {
-            return false;
-        }
-
-        return !info.getCurrentForm().stackable.isVanillaStackable();
+        return ExtraRaces.isFormDrainCancelled();
     }
 }
 

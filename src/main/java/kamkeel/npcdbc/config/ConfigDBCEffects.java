@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -318,7 +319,10 @@ public class ConfigDBCEffects {
                     legalValuesComment.append(legalValues[y]);
                 }
 
-                String[] formNames = config.getStringList(JRMCoreH.Races[i] + " - Divine affected forms", DIVINE_RACES, defaultDivineRaces[i], "Forms affected by divine multi.\nLegal values: " + legalValuesComment + "\n", legalValues);
+                // Extra races (DbrRazas) have no default row: their "God" form if they have one.
+                String[] defaults = i < defaultDivineRaces.length ? defaultDivineRaces[i]
+                    : (Arrays.asList(JRMCoreH.trans[i]).contains("God") ? new String[]{"God"} : new String[0]);
+                String[] formNames = config.getStringList(JRMCoreH.Races[i] + " - Divine affected forms", DIVINE_RACES, defaults, "Forms affected by divine multi.\nLegal values: " + legalValuesComment + "\n", legalValues);
                 for (String name : formNames) {
                     formsAffected.put(name, true);
                 }

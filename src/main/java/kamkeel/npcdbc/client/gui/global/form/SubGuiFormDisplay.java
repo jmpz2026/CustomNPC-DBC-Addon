@@ -219,7 +219,7 @@ public class SubGuiFormDisplay extends SubGuiInterface implements ISubGuiListene
             window.addButton(new GuiNpcButtonYesNo(115, width - x - 75, y - 5, 50, 20, form.display.effectMajinHair));
         }
 
-        if (visualDisplay.race == DBCRace.HUMAN || DBCRace.isSaiyan(visualDisplay.race) || (visualDisplay.race == DBCRace.MAJIN && display.effectMajinHair)) {
+        if (visualDisplay.race == DBCRace.HUMAN || DBCRace.isExtraRace(visualDisplay.race) || DBCRace.isSaiyan(visualDisplay.race) || (visualDisplay.race == DBCRace.MAJIN && display.effectMajinHair)) {
             y = addHairOptions(x, y);
         }
 

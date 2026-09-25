@@ -1,5 +1,6 @@
 package kamkeel.npcdbc.client.gui.component;
 
+import JinRyuu.JRMCore.JRMCoreH;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.data.form.Form;
@@ -43,6 +44,10 @@ public class SubGuiSetParents extends SubGuiInterface implements ICustomScrollLi
         races.add("Namekian");
         races.add("Arcosian");
         races.add("Majin");
+        for (int race = DBCRace.KAIOSHIN; race < JRMCoreH.Races.length; race++) {
+            allForms.put(race, DBCForm.getFormsMap(race));
+            races.add(JRMCoreH.Races[race]);
+        }
     }
 
     @Override
@@ -92,7 +97,7 @@ public class SubGuiSetParents extends SubGuiInterface implements ICustomScrollLi
             dbcForms.selected = -1;
         }
         if (id == 11) {
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < JRMCoreH.Races.length; i++)
                 form.removeFormRequirement(i);
             dbcForms.selected = -1;
         }

@@ -175,7 +175,7 @@ public class Form implements IForm {
 
     @Override
     public void setRace(int race) {
-        if ((race > 5 || race < -1) && race != DBCRace.ALL_SAIYANS)
+        if (race != DBCRace.ALL && race != DBCRace.ALL_SAIYANS && !DBCRace.isValidRace(race))
             return;
 
         this.race = race;
@@ -339,7 +339,7 @@ public class Form implements IForm {
 
     @Override
     public void addFormRequirement(int race, byte state) {
-        if ((race > 5 || race < 0) && race != 12)
+        if (!DBCRace.isValidRace(race) && race != DBCRace.ALL_SAIYANS)
             return;
 
         // Add some kind of validate State Index Here
@@ -350,7 +350,7 @@ public class Form implements IForm {
 
     @Override
     public void removeFormRequirement(int race) {
-        if ((race > 5 || race < 0) && race != 12)
+        if (!DBCRace.isValidRace(race) && race != DBCRace.ALL_SAIYANS)
             return;
         requiredForm.remove(race);
     }
