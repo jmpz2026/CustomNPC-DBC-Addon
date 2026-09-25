@@ -18,6 +18,7 @@ import kamkeel.npcdbc.api.npc.IDBCStats;
 import kamkeel.npcdbc.client.ClientCache;
 import kamkeel.npcdbc.config.ConfigDBCGameplay;
 import kamkeel.npcdbc.constants.DBCAttribute;
+import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.constants.DBCSettings;
 import kamkeel.npcdbc.controllers.DBCEffectController;
 import kamkeel.npcdbc.data.DBCDamageCalc;
@@ -874,7 +875,7 @@ public class DBCUtils {
         }
         level -= 1;
 
-        if (race < 0 || race > 5) {
+        if (!DBCRace.isValidRace(race) || race >= DBCRacialSkillTPCost.length) {
             throw new CustomNPCsException("Unknown Race ID");
         }
         int[] skillCosts = DBCRacialSkillTPCost[race];
@@ -892,7 +893,7 @@ public class DBCUtils {
         }
         level -= 1;
 
-        if (race < 0 || race > 5) {
+        if (!DBCRace.isValidRace(race) || race >= DBCRacialSkillMindCost.length) {
             throw new CustomNPCsException("Unknown Race ID");
         }
         int[] skillCosts = DBCRacialSkillMindCost[race];

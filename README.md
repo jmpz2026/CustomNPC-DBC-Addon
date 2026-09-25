@@ -12,6 +12,22 @@
 
 ----------------
 
+### 🔧 About this fork
+This is a **modified fork** of the CustomNPC+ DBC Addon. The original mod is made by
+**KAMKEEL** (CustomNPC+ and this addon); **Noppes** is the original author of CustomNPCs.
+All credit for the mod goes to them. This fork is based on upstream `1.1.5` (`95d3d1d6`)
+and only adds the changes listed below.
+
+**Changes in 1.1.6 (fork):**
+- Support for extra playable races added to JRMCore at runtime by other mods (race IDs
+  6 and up): race ranges are read from `JRMCoreH.Races` instead of being fixed to 0..5
+  (`DBCRace.isValidRace`, forms, scripting API, racial skill costs).
+- Custom forms on an extra race no longer throw a `NullPointerException`: its attribute
+  formula is asked to the mod that adds the race through `kamkeel.npcdbc.compat.ExtraRaces`
+  (soft dependency, resolved by reflection; without it the base attribute is used).
+- The form editor, the parent-form picker and the Divine config list the extra races.
+- Build toolchain updated so the project compiles with the current GTNH infrastructure.
+
 ### ⬇️ Downloads
 - **Modrinth**: [NONE]()
 - **CurseForge**: [NONE]()

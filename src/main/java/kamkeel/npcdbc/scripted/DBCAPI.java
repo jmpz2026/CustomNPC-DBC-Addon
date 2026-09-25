@@ -19,6 +19,7 @@ import kamkeel.npcdbc.api.npc.IDBCStats;
 import kamkeel.npcdbc.api.outline.IOutline;
 import kamkeel.npcdbc.api.outline.IOutlineHandler;
 import kamkeel.npcdbc.combat.Dodge;
+import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.controllers.*;
 import kamkeel.npcdbc.data.DBCDamageCalc;
 import kamkeel.npcdbc.data.KiAttack;
@@ -154,12 +155,12 @@ public class DBCAPI extends AbstractDBCAPI {
     }
 
     /**
-     * @param race 0 to 5
+     * @param race 0 to 5, or an extra race added by DbrRazas
      * @return Name of race ID
      */
     @Override
     public String getRaceName(int race) {
-        if (race >= 0 && race <= 5) {
+        if (DBCRace.isValidRace(race)) {
             return JRMCoreH.Races[race];
         }
         return "";
@@ -175,8 +176,12 @@ public class DBCAPI extends AbstractDBCAPI {
         CustomNPCsException c = new CustomNPCsException("Invalid \nform ID for race " + JRMCoreH.Races[race], new Object[0]);
         CustomNPCsException r = new CustomNPCsException("Invalid Race : \nValid Races are \n0 Human, 1 Saiyan\n 2 Half-Saiyan, 3 Namekian\n4 Arcosian, 5 Majin", new Object[1]);
         if (form >= 0) {
-            if (race > 5) {
+            if (!DBCRace.isValidRace(race)) {
                 throw r;
+            } else if (DBCRace.isExtraRace(race)) {
+                if (form >= JRMCoreH.trans[race].length) {
+                    throw c;
+                }
             } else {
                 switch (race) {
                     case 0:
@@ -234,8 +239,8 @@ public class DBCAPI extends AbstractDBCAPI {
      */
     @Override
     public int getAllFormsLength(int race, boolean nonRacial) {
-        if (race < 0 || race > 5) {
-            throw new CustomNPCsException("Races are from 0 to 5", new Object[0]);
+        if (!DBCRace.isValidRace(race)) {
+            throw new CustomNPCsException("Races are from 0 to " + (JRMCoreH.Races.length - 1), new Object[0]);
         }
         if (nonRacial) {
             return JRMCoreH.transNonRacial.length;
@@ -250,8 +255,8 @@ public class DBCAPI extends AbstractDBCAPI {
      */
     @Override
     public String[] getAllForms(int race, boolean nonRacial) {
-        if (race < 0 || race > 5) {
-            throw new CustomNPCsException("Races are from 0 to 5", new Object[0]);
+        if (!DBCRace.isValidRace(race)) {
+            throw new CustomNPCsException("Races are from 0 to " + (JRMCoreH.Races.length - 1), new Object[0]);
         }
         if (nonRacial) {
             return JRMCoreH.transNonRacial;

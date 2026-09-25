@@ -394,6 +394,11 @@ public class DBCForm {
             forms.put(MajinFullPower, "§5Full Power");
             forms.put(MajinPure, "§dPure");
             forms.put(MajinGod, "§cGod");
+        } else if (DBCRace.isExtraRace(race)) {
+            // Extra races (DbrRazas): their forms straight from JRMCore's table, state = index.
+            String[] trans = JinRyuu.JRMCore.JRMCoreH.trans[race];
+            for (int i = 1; i < trans.length; i++)
+                forms.put(i, "§d" + trans[i]);
         }
         return forms;
     }

@@ -323,7 +323,7 @@ public class ScriptDBCAddon<T extends EntityPlayerMP> extends ScriptDBCPlayer<T>
      */
     @Override
     public String getRaceName() {
-        if (this.getRace() >= 0 && this.getRace() <= 5) {
+        if (DBCRace.isValidRace(this.getRace())) {
             return JRMCoreH.Races[this.getRace()];
         }
         return null;
