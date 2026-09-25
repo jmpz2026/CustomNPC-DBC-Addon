@@ -64,7 +64,7 @@ public class SubGuiFormDisplay extends SubGuiInterface implements ISubGuiListene
 
         hasRace = form.race() != -1;
         if (hasRace) {
-            racePage = (byte) form.race();
+            racePage = (byte) (DBCRace.isExtraRace(form.race()) ? DBCRace.HUMAN : form.race());
         }
         visualDisplay.race = racePage;
         visualDisplay.setDefaultColors();

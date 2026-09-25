@@ -858,6 +858,10 @@ public class DBCDisplay implements IDBCDisplay, IAuraData {
             visualDisplay.enabled = true;
             visualDisplay.useSkin = true;
             visualDisplay.race = DBCData.getClient().Race;
+            // The NPC DBC model only knows races 0..5; an extra race (added by another
+            // mod) uses the human body, the same path its player render takes.
+            if (DBCRace.isExtraRace(visualDisplay.race))
+                visualDisplay.race = DBCRace.HUMAN;
             visualDisplay.setDefaultColors();
             boolean isSaiyan = DBCRace.isSaiyan(visualDisplay.race);
             if (isSaiyan) {
