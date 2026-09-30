@@ -13,7 +13,10 @@ import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.shader.Framebuffer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
@@ -127,6 +130,11 @@ public class PostProcessing {
         if (!processBloom)
             return;
 
+        // The postProcess path (resetGLState == false) runs right before the HUD, which
+        // inherits whatever GL state is left behind. Snapshot it so the HUD sees exactly
+        // what it would see with bloom off (fixes black chat text on strict drivers like Mesa).
+        GLStateSnapshot snapshot = resetGLState ? null : GLStateSnapshot.capture();
+
         updateViewportDimensions();
         int width = VIEWPORT_WIDTH, height = VIEWPORT_HEIGHT;
         FloatBuffer prevModelView = getModelView();
@@ -157,8 +165,9 @@ public class PostProcessing {
         blurFilter(bloomTextures[0], 2.5f, 0, 0, width, height);
         int downSamples = 0;
         for (int i = 0; i < bloomBuffers.length; i++) {
-            if (bloomBuffers[i] <= 0 || i + 1 >= bloomBuffers.length)
-                continue;
+            // Stop at the last allocated mip: bloomBuffers[i + 1] == 0 would bind the default framebuffer
+            if (i + 1 >= bloomBuffers.length || bloomBuffers[i] <= 0 || bloomBuffers[i + 1] <= 0)
+                break;
             int mipWidth = width >> (i + 2), mipHeight = height >> (i + 2);
             glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[i + 1]);
             glViewport(0, 0, mipWidth, mipHeight);
@@ -219,6 +228,97 @@ public class PostProcessing {
 
         MAIN.bindFramebuffer(false);
         processBloom = false;
+
+        if (snapshot != null)
+            snapshot.restore();
+    }
+
+    /**
+     * Fixed-function state that bloom() touches and the in-game HUD relies on.
+     */
+    private static final class GLStateSnapshot {
+        private final FloatBuffer modelView = BufferUtils.createFloatBuffer(16);
+        private final FloatBuffer projection = BufferUtils.createFloatBuffer(16);
+        private final FloatBuffer color = BufferUtils.createFloatBuffer(16);
+        private final FloatBuffer clearColor = BufferUtils.createFloatBuffer(16);
+        private final ByteBuffer colorMask = BufferUtils.createByteBuffer(16);
+        private int matrixMode, framebuffer, program, activeTexture;
+        private int blendSrcRGB, blendDstRGB, blendSrcAlpha, blendDstAlpha;
+        private int texture0, texture2;
+        private boolean blend, alphaTest, depthTest, depthMask, lighting, fog, texture2D, colorMaterial, lightmap;
+
+        static GLStateSnapshot capture() {
+            GLStateSnapshot s = new GLStateSnapshot();
+            s.matrixMode = glGetInteger(GL_MATRIX_MODE);
+            glGetFloat(GL_MODELVIEW_MATRIX, s.modelView);
+            glGetFloat(GL_PROJECTION_MATRIX, s.projection);
+            glGetFloat(GL_CURRENT_COLOR, s.color);
+            glGetFloat(GL_COLOR_CLEAR_VALUE, s.clearColor);
+            glGetBoolean(GL_COLOR_WRITEMASK, s.colorMask);
+            s.framebuffer = glGetInteger(GL_FRAMEBUFFER_BINDING);
+            s.program = glGetInteger(GL20.GL_CURRENT_PROGRAM);
+            s.blendSrcRGB = glGetInteger(GL14.GL_BLEND_SRC_RGB);
+            s.blendDstRGB = glGetInteger(GL14.GL_BLEND_DST_RGB);
+            s.blendSrcAlpha = glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
+            s.blendDstAlpha = glGetInteger(GL14.GL_BLEND_DST_ALPHA);
+            s.blend = glIsEnabled(GL_BLEND);
+            s.alphaTest = glIsEnabled(GL_ALPHA_TEST);
+            s.depthTest = glIsEnabled(GL_DEPTH_TEST);
+            s.depthMask = glGetBoolean(GL_DEPTH_WRITEMASK);
+            s.lighting = glIsEnabled(GL_LIGHTING);
+            s.fog = glIsEnabled(GL_FOG);
+            s.colorMaterial = glIsEnabled(GL_COLOR_MATERIAL);
+
+            s.activeTexture = glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+            OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+            s.texture2D = glIsEnabled(GL_TEXTURE_2D);
+            s.texture0 = glGetInteger(GL_TEXTURE_BINDING_2D);
+            OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+            s.lightmap = glIsEnabled(GL_TEXTURE_2D);
+            OpenGlHelper.setActiveTexture(GL13.GL_TEXTURE2);
+            s.texture2 = glGetInteger(GL_TEXTURE_BINDING_2D);
+            OpenGlHelper.setActiveTexture(s.activeTexture);
+            return s;
+        }
+
+        void restore() {
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            ARBShaderObjects.glUseProgramObjectARB(program);
+
+            glMatrixMode(GL_PROJECTION);
+            glLoadMatrix(projection);
+            glMatrixMode(GL_MODELVIEW);
+            glLoadMatrix(modelView);
+            glMatrixMode(matrixMode);
+
+            glColor4f(color.get(0), color.get(1), color.get(2), color.get(3));
+            glClearColor(clearColor.get(0), clearColor.get(1), clearColor.get(2), clearColor.get(3));
+            glColorMask(colorMask.get(0) != 0, colorMask.get(1) != 0, colorMask.get(2) != 0, colorMask.get(3) != 0);
+            OpenGlHelper.glBlendFunc(blendSrcRGB, blendDstRGB, blendSrcAlpha, blendDstAlpha);
+            setState(GL_BLEND, blend);
+            setState(GL_ALPHA_TEST, alphaTest);
+            setState(GL_DEPTH_TEST, depthTest);
+            glDepthMask(depthMask);
+            setState(GL_LIGHTING, lighting);
+            setState(GL_FOG, fog);
+            setState(GL_COLOR_MATERIAL, colorMaterial);
+
+            OpenGlHelper.setActiveTexture(GL13.GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, texture2);
+            OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+            setState(GL_TEXTURE_2D, lightmap);
+            OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+            setState(GL_TEXTURE_2D, texture2D);
+            glBindTexture(GL_TEXTURE_2D, texture0);
+            OpenGlHelper.setActiveTexture(activeTexture);
+        }
+
+        private static void setState(int cap, boolean enabled) {
+            if (enabled)
+                glEnable(cap);
+            else
+                glDisable(cap);
+        }
     }
 
     public static void captureSceneDepth() {

@@ -2,7 +2,7 @@
 
 varying vec3 vertPos;
 varying vec2 texCoord;
-varying vec3 clippingPos;
+varying vec4 clippingPos;
 
 uniform vec4 color1;
 uniform vec4 color2;
