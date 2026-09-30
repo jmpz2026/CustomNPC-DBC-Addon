@@ -284,6 +284,10 @@ statsheet.old=Old
 statsheet.advanced=Advanced
 statsheet.simple=Simple
 statsheet.tooltip=Tooltip Modifications
+statsheet.podertotal.total=§8Total power: §6%d%%
+statsheet.podertotal.release=§8Real release: %d%%
+statsheet.podertotal.combat=§8Damage, defense and ki power §4x%s
+statsheet.podertotal.size=§8Size and aura up to %d%%
 
 statsheet.stat.charging=Charging
 statsheet.stat.charging.description=/n§8Charging Output §5%6$s §8

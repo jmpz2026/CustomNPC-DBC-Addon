@@ -260,6 +260,10 @@ statsheet.old=Clásico
 statsheet.advanced=Avanzado
 statsheet.simple=Simple
 statsheet.tooltip=Modificaciones de etiquetas
+statsheet.podertotal.total=§8Poder total: §6%d%%
+statsheet.podertotal.release=§8Release real: %d%%
+statsheet.podertotal.combat=§8Daño, defensa y poder de ki §4x%s
+statsheet.podertotal.size=§8Tamaño y aura hasta %d%%
 
 statsheet.stat.charging=Cargando
 statsheet.stat.charging.description=/n§8Mientras Carga §5%6$s §8
