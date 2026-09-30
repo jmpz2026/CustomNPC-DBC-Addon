@@ -95,13 +95,20 @@ public class PostProcessing {
     }
 
     public static void postProcess() {
+        boolean blurWheel = bloomSupported && ShaderHelper.shadersEnabled() &&
+            mc.currentScreen instanceof HUDFormWheel && HUDFormWheel.BLUR_ENABLED;
+
+        // This runs right before the HUD, which inherits whatever GL state is left behind.
+        // Snapshot it so the HUD sees exactly what it would see with bloom and the form wheel
+        // blur off (fixes black chat text on strict drivers like Mesa).
+        GLStateSnapshot snapshot = bloomSupported && (processBloom || blurWheel) ? GLStateSnapshot.capture() : null;
+
         // when bloomSupported is false, skip bloom entirely
         if (bloomSupported) {
             bloom(1.5f, false);
         }
 
-        if (bloomSupported && ShaderHelper.shadersEnabled() &&
-            mc.currentScreen instanceof HUDFormWheel && HUDFormWheel.BLUR_ENABLED) {
+        if (blurWheel) {
             Framebuffer buff = getMainBuffer();
             GL11.glMatrixMode(GL11.GL_MODELVIEW);
             GL11.glLoadIdentity();
@@ -126,6 +133,9 @@ public class PostProcessing {
             glEnable(GL_COLOR_MATERIAL);
         }
 
+        if (snapshot != null)
+            snapshot.restore();
+
         if (isScissorEnabled)
             GL11.glEnable(GL_SCISSOR_TEST);
     }
@@ -138,11 +148,6 @@ public class PostProcessing {
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
         if (!processBloom)
             return;
-
-        // The postProcess path (resetGLState == false) runs right before the HUD, which
-        // inherits whatever GL state is left behind. Snapshot it so the HUD sees exactly
-        // what it would see with bloom off (fixes black chat text on strict drivers like Mesa).
-        GLStateSnapshot snapshot = resetGLState ? null : GLStateSnapshot.capture();
 
         updateViewportDimensions();
         int width = VIEWPORT_WIDTH, height = VIEWPORT_HEIGHT;
@@ -238,13 +243,10 @@ public class PostProcessing {
 
         MAIN.bindFramebuffer(false);
         processBloom = false;
-
-        if (snapshot != null)
-            snapshot.restore();
     }
 
     /**
-     * Fixed-function state that bloom() touches and the in-game HUD relies on.
+     * Fixed-function state that postProcess() touches and the in-game HUD relies on.
      */
     private static final class GLStateSnapshot {
         private final FloatBuffer modelView = BufferUtils.createFloatBuffer(16);
