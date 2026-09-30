@@ -100,6 +100,18 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
 
     }
 
+    /**
+     * Tooltip of the release line while DBR's poder total is active.
+     */
+    private String getPoderTotalDescription(int release, int total) {
+        String multi = String.format(Locale.US, "%.2f", total / 100.0);
+        int size = Math.min(total, PoderTotalClient.TOPE_FISICO);
+        return String.format(LocalizationHelper.getLocalizedString("statsheet.podertotal.total"), total)
+            + "\n" + String.format(LocalizationHelper.getLocalizedString("statsheet.podertotal.release"), release)
+            + "\n" + String.format(LocalizationHelper.getLocalizedString("statsheet.podertotal.combat"), multi)
+            + "\n" + String.format(LocalizationHelper.getLocalizedString("statsheet.podertotal.size"), size);
+    }
+
     @Override
     public void updateScreen() {
         DBCData dbcClient = DBCData.getClient();
@@ -395,8 +407,10 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             .tooltipWidth = descriptionWidth;
 
 
+        int poderTotal = PoderTotalClient.total(dbcClient.Release);
         this.dynamicLabels.get("release")
-            .updateDisplay(dbcClient.Release);
+            .updateDisplay(poderTotal > 0 ? "§6" + poderTotal : dbcClient.Release)
+            .setTooltip(poderTotal > 0 ? getPoderTotalDescription(dbcClient.Release, poderTotal) : null);
 
 
         int SPI = stat(JRMCoreClient.mc.thePlayer, 5, 1, 5, statVals[5], dbcClient.Race, dbcClient.Class, SklLvl_KiBs(PlyrSkills, 1));
