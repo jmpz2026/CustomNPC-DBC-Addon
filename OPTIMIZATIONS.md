@@ -11,6 +11,28 @@ referencia.
 
 ---
 
+## Ramas: normal y optimizada
+
+Hay dos ramas y se compilan las dos:
+
+| Rama | Jar | Qué lleva |
+|---|---|---|
+| `main-version` | `npcdbc-1.1.6.jar` (normal) | El fork de DBR (razas extra, poder total en la Stat Sheet, arreglos) sin optimizaciones |
+| `optimized-version` | `npcdbc-1.1.6.jar` (optimizado) | Todo lo de `main-version` + los cambios de rendimiento de este documento |
+
+- Las dos ramas **solo difieren en las optimizaciones**. Todo lo que no sea de rendimiento
+  (funciones, arreglos, GUI) entra primero en `main-version` y después se mergea a
+  `optimized-version` (`git checkout optimized-version && git merge main-version`). Nunca al revés.
+- Un arreglo que nace en código optimizado y también aplica al original se adapta a
+  `main-version` por su lado (como el estado GL del bloom en `986db1ba`).
+- Los dos jars se llaman igual y tienen el mismo modid: van en carpetas de salida distintas
+  (`normal/` y `optimizado/`) y nunca juntos en `mods/`.
+- En el pack de DBR, el modo Ligero de DbrRendimiento enciende `Low Spec Mode` y el Normal
+  lo apaga (`RecortesTerceros` de DbrMod, por reflexión). Con el jar normal no hay nada que
+  encender y no pasa nada.
+
+---
+
 ## Cómo compilar
 
 Requiere **JDK 17 o 21** para correr Gradle (el toolchain de compilación es Java 8,
