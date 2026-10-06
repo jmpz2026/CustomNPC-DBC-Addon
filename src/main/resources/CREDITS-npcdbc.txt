@@ -1,0 +1,17 @@
+CustomNPC+ DBC Addon (npcdbc) - Dragon Block Resurrection build
+
+Original project: CustomNPC+ DBC Addon
+Authors: KAMKEEL (Kam), bigguy345 (Goatee), somehussar (Hussar) and contributors
+Additional credits: @PopsicleNate (textures), @mtbarr (bug fixes), kla_xi (Chinese language file)
+Original source: https://github.com/KAMKEEL/CustomNPC-DBC-Addon
+
+This build is a modified version (fork) maintained by Machitos for the
+Dragon Block Resurrection server.
+Fork source: https://github.com/jmpz2026/CustomNPC-DBC-Addon
+
+Distributed to Dragon Block Resurrection players through the server launcher
+with the permission of KAMKEEL (granted on 2026-10-05), on the condition that
+credit is given and that this build is not published on mod hosting sites
+such as CurseForge or Modrinth.
+
+All rights to the original work remain with its authors.
