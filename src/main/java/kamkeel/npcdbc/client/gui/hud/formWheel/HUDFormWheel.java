@@ -5,7 +5,7 @@ import kamkeel.npcdbc.client.ClientProxy;
 import kamkeel.npcdbc.client.KeyHandler;
 import kamkeel.npcdbc.client.gui.component.SubGuiSelectForm;
 import kamkeel.npcdbc.client.render.RenderEventHandler;
-import kamkeel.npcdbc.client.shader.ShaderHelper;
+import kamkeel.npcdbc.client.shader.PostProcessing;
 import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.data.FormWheelData;
@@ -430,7 +430,7 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
 
             drawGradientRect(0, 0, this.width, this.height, gradientColor, gradientColor);
 
-        if (!ShaderHelper.shadersEnabled())
+        if (!PostProcessing.wheelBlurAvailable())
             drawGradientRectWithFade(0, 0, width, height, 0x88000000, 0xfa000000, guiAnimationScale);
 
 

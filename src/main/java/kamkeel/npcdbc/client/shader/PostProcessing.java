@@ -53,6 +53,14 @@ public class PostProcessing {
     public static boolean processBloom;
     public static boolean bloomSupported = true; // ← new flag
 
+    // Android's LTW wrapper (GLES underneath): the form wheel's background blur leaves the screen black at random
+    // there, and only there. The wheel keeps its plain dark background instead.
+    private static boolean wheelBlurUnsafe;
+
+    public static boolean wheelBlurAvailable() {
+        return bloomSupported && !wheelBlurUnsafe && ShaderHelper.shadersEnabled();
+    }
+
     // Copy of the main framebuffer the bloom combine samples from: reading MAIN.framebufferTexture while
     // MAIN is the draw target is a feedback loop, undefined behavior that some drivers resolve with a stale
     // read that wipes whatever was drawn since (the Y form wheel flicker).
@@ -110,7 +118,7 @@ public class PostProcessing {
             bloom(1.5f, false);
         }
 
-        if (bloomSupported && ShaderHelper.shadersEnabled() &&
+        if (wheelBlurAvailable() &&
             mc.currentScreen instanceof HUDFormWheel && HUDFormWheel.BLUR_ENABLED
             // The first frame after opening still has intensity 0; the shader divides by it (black frame on Mesa).
             && HUDFormWheel.BLUR_INTENSITY > 0.01f) {
@@ -446,6 +454,8 @@ public class PostProcessing {
     public static void init(int width, int height) {
         hasInitialized = true;
         bloomSupported = true;
+        final String glVersion = GL11.glGetString(GL11.GL_VERSION);
+        wheelBlurUnsafe = glVersion != null && glVersion.contains("LTW");
         stencilAvailable = detectStencil();
 
         // Minimal check: if FBOs or shaders aren’t supported, disable bloom entirely
