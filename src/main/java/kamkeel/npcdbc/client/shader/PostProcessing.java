@@ -111,7 +111,9 @@ public class PostProcessing {
         }
 
         if (bloomSupported && ShaderHelper.shadersEnabled() &&
-            mc.currentScreen instanceof HUDFormWheel && HUDFormWheel.BLUR_ENABLED) {
+            mc.currentScreen instanceof HUDFormWheel && HUDFormWheel.BLUR_ENABLED
+            // The first frame after opening still has intensity 0; the shader divides by it (black frame on Mesa).
+            && HUDFormWheel.BLUR_INTENSITY > 0.01f) {
             // Runs right before the HUD and the GUI: hand them back the state they had.
             GLStateSnapshot snapshot = GLStateSnapshot.capture();
             Framebuffer buff = getMainBuffer();
