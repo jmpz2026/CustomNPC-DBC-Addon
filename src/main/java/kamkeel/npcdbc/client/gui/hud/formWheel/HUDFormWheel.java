@@ -64,6 +64,9 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
 
     public boolean isClosing;
 
+    /** No animation, no blur, fixed dark overlay. See {@link SimpleWheel}. */
+    final boolean simple;
+
     public static final int CLOSE_TIME = 600;
     public static final int OPEN_TIME = 1500;
 
@@ -76,7 +79,7 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
     private static final long MAX_STEP_MS = 2000;
     private static long steadyMillis = 1, lastRawMillis = Long.MIN_VALUE;
 
-    private static synchronized long now() {
+    static synchronized long now() {
         final long raw = System.nanoTime() / 1_000_000L;
         if (lastRawMillis != Long.MIN_VALUE) {
             final long step = raw - lastRawMillis;
@@ -93,6 +96,9 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
 
     public HUDFormWheel() {
         mc = Minecraft.getMinecraft();
+        simple = SimpleWheel.active();
+        if (simple)
+            guiAnimationScale = 1;
         dbcData = DBCData.getClient();
         dbcForms = dbcData.getUnlockedDBCFormsMap();
         dbcInfo = PlayerDataUtil.getClientDBCInfo();
@@ -379,6 +385,10 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
 
             mc.inGameHasFocus = true;
             mc.mouseHelper.grabMouseCursor();
+            if (simple) {
+                close();
+                return;
+            }
             isClosing = true;
             timeClosed = (long) (now() - (1 - Math.max(0, Math.min(1, guiAnimationScale))) * CLOSE_TIME);
         }
@@ -438,7 +448,9 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
         }
         // The animation progress is clamped to [0, 1] on both ends: a negative progress makes easeOutExpo explode,
         // the scale goes to Infinity and the wheel never closes (opaque black overlay, invisible segments).
-        if (isClosing && guiAnimationScale >= 0) {
+        if (simple) {
+            guiAnimationScale = 1;
+        } else if (isClosing && guiAnimationScale >= 0) {
             float updateTime = (float) (now() - timeClosed) / CLOSE_TIME;
             updateTime = Math.max(0, Math.min(1, updateTime));
             guiAnimationScale = (float) (1 - easeOutExpo(updateTime));
@@ -454,15 +466,18 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
             guiAnimationScale = isClosing ? 0 : 1;
         guiAnimationScale = Math.max(0, Math.min(1, guiAnimationScale));
 
-        BLUR_INTENSITY = guiAnimationScale * MAX_BLUR;
+        if (simple) {
+            BLUR_INTENSITY = 0;
+            drawRect(0, 0, width, height, 0x80000000);
+        } else {
+            BLUR_INTENSITY = guiAnimationScale * MAX_BLUR;
 
-        int gradientColor = ((int) (255 * 0.2f * guiAnimationScale) << 24);
-        this.
-
+            int gradientColor = ((int) (255 * 0.2f * guiAnimationScale) << 24);
             drawGradientRect(0, 0, this.width, this.height, gradientColor, gradientColor);
 
-        if (!PostProcessing.wheelBlurAvailable())
-            drawGradientRectWithFade(0, 0, width, height, 0x88000000, 0xfa000000, guiAnimationScale);
+            if (!PostProcessing.wheelBlurAvailable())
+                drawGradientRectWithFade(0, 0, width, height, 0x88000000, 0xfa000000, guiAnimationScale);
+        }
 
 
         glPushMatrix();
