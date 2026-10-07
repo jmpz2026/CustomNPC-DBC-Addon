@@ -320,6 +320,12 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
 
     @Override
     public void updateScreen() {
+        // The close is normally finished by drawScreen's animation. Finish it from the tick too, so the wheel can
+        // never linger on screen after a form was picked (seen on Android, cause not pinned down yet).
+        if (isClosing && now() - timeClosed > CLOSE_TIME + 250) {
+            close();
+            return;
+        }
         if (mc.thePlayer.ticksExisted % 10 == 0)
             dbcForms = dbcData.getUnlockedDBCFormsMap();
 
@@ -433,6 +439,8 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
 
             guiAnimationScale = (float) easeOutExpo(updateTime);
         }
+        if (Float.isNaN(guiAnimationScale))
+            guiAnimationScale = isClosing ? 0 : 1;
         guiAnimationScale = Math.max(0, Math.min(1, guiAnimationScale));
 
         BLUR_INTENSITY = guiAnimationScale * MAX_BLUR;
