@@ -68,12 +68,23 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
     public static final int OPEN_TIME = 1500;
 
     /**
-     * Monotonic milliseconds for the wheel's timers. On Android Minecraft.getSystemTime() can jump ahead for a frame:
-     * a close time taken at that instant lay a minute in the future, and the wheel stayed open as an opaque black
-     * overlay until the clock caught up.
+     * Steady milliseconds for the wheel's timers, built from clamped steps. On Android both Minecraft.getSystemTime()
+     * and System.nanoTime() can read a value tens of seconds ahead for a single call: a close time taken at that
+     * instant lay in the future and the wheel stayed on screen until the clock caught up. Steps that go backwards or
+     * jump more than {@link #MAX_STEP_MS} are dropped.
      */
-    private static long now() {
-        return System.nanoTime() / 1_000_000L;
+    private static final long MAX_STEP_MS = 2000;
+    private static long steadyMillis = 1, lastRawMillis = Long.MIN_VALUE;
+
+    private static synchronized long now() {
+        final long raw = System.nanoTime() / 1_000_000L;
+        if (lastRawMillis != Long.MIN_VALUE) {
+            final long step = raw - lastRawMillis;
+            if (step > 0 && step <= MAX_STEP_MS)
+                steadyMillis += step;
+        }
+        lastRawMillis = raw;
+        return steadyMillis;
     }
 
     public double easeOutExpo(double x) {
