@@ -1,3 +1,8 @@
+> **This is an unofficial fork.** It is **not** the official CustomNPC+ DBC Addon.
+> The original mod, its code and its assets belong to **KAMKEEL (Kam)**, **bigguy345 (Goatee)**
+> and **somehussar (Hussar)**. Official project: https://github.com/KAMKEEL/CustomNPC-DBC-Addon
+> — please report bugs of the original mod there, and bugs of this fork here.
+
 
 ## 👋 Welcome to the CustomNPC+ DBC Addon Repository.
 
@@ -13,10 +18,24 @@
 ----------------
 
 ### 🔧 About this fork
-This is a **modified fork** of the CustomNPC+ DBC Addon. The original mod is made by
-**KAMKEEL** (CustomNPC+ and this addon); **Noppes** is the original author of CustomNPCs.
-All credit for the mod goes to them. This fork is based on upstream `1.1.5` (`95d3d1d6`)
-and only adds the changes listed below.
+This repository is a **fork** of [KAMKEEL/CustomNPC-DBC-Addon](https://github.com/KAMKEEL/CustomNPC-DBC-Addon),
+maintained by Machitos for the **Dragon Block Resurrection** server. It is based on upstream `1.1.5`
+(`95d3d1d6`) and only adds the changes listed below; everything else is the original work.
+
+**Credits — all credit for the mod goes to its authors:**
+- **KAMKEEL (Kam)** — creator of CustomNPC+ and of this addon
+- **bigguy345 (Goatee)** — author
+- **somehussar (Hussar)** — author
+- **@PopsicleNate** — textures
+- **@mtbarr** — bug fixes
+- **kla_xi** — Chinese language file
+- **Noppes** — original author of CustomNPCs
+- and every contributor of the [original repository](https://github.com/KAMKEEL/CustomNPC-DBC-Addon/graphs/contributors)
+
+All rights to the original work remain with its authors. This fork is distributed only to Dragon Block
+Resurrection players through the server launcher, **with the permission of KAMKEEL** (granted on
+2026-10-05), on the condition that credit is given and that it is not published on mod hosting sites
+such as CurseForge or Modrinth.
 
 **Changes in 1.1.6 (fork):**
 - Support for extra playable races added to JRMCore at runtime by other mods (race IDs
