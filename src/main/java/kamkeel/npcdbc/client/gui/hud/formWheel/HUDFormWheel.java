@@ -67,6 +67,15 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
     public static final int CLOSE_TIME = 600;
     public static final int OPEN_TIME = 1500;
 
+    /**
+     * Monotonic milliseconds for the wheel's timers. On Android Minecraft.getSystemTime() can jump ahead for a frame:
+     * a close time taken at that instant lay a minute in the future, and the wheel stayed open as an opaque black
+     * overlay until the clock caught up.
+     */
+    private static long now() {
+        return System.nanoTime() / 1_000_000L;
+    }
+
     public double easeOutExpo(double x) {
         return x == 1 ? 1 : 1 - Math.pow(2, -10 * x);
     }
@@ -95,7 +104,7 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
         super.initGui();
         // Prevents replaying the open animation on screen resize
         if (timeOpened == 0)
-            timeOpened = Minecraft.getSystemTime();
+            timeOpened = now();
 
         scaledResolution = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
 
@@ -233,12 +242,12 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
             configureEnabled = button.getValue() == 1;
             if (configureEnabled) {
                 selectSlot(-1);
-                timeClosedSubGui = Minecraft.getSystemTime();
+                timeClosedSubGui = now();
             }
         } else if (button.id == 7) {
             ConfigDBCClient.AlteranteSelectionWheelTexture = !ConfigDBCClient.AlteranteSelectionWheelTexture;
             ConfigDBCClient.AlternateSelectionWheelTextureProperty.set((ConfigDBCClient.AlteranteSelectionWheelTexture));
-            timeClosedSubGui = Minecraft.getSystemTime();
+            timeClosedSubGui = now();
         }
         if (button.id == 8) {
             this.setSubGui(new SubGuiSelectForm(button.id, true, true).displayDBCForms(DBCData.getClient()));
@@ -257,7 +266,7 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
                 Form form = slot.form;
 
                 selectSlot(slotID);
-                timeClosedSubGui = Minecraft.getSystemTime();
+                timeClosedSubGui = now();
 
                 if (form != null && selectForm.selectedFormID == form.id)
                     return;
@@ -272,7 +281,7 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
 
                 slot.removeForm();
             }
-            timeClosedSubGui = Minecraft.getSystemTime();
+            timeClosedSubGui = now();
         }
         initGui();
     }
@@ -292,7 +301,7 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
             if (tempHoveredSlot == -1)
                 tempHoveredSlot = 5;
 
-            boolean justOpened = Minecraft.getSystemTime() - timeOpened < 50;
+            boolean justOpened = now() - timeOpened < 50;
             if (!justOpened && tempHoveredSlot != hoveredSlot && !configureEnabled)
                 selectSlot(tempHoveredSlot);
         }
@@ -321,9 +330,9 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
         if (Mouse.isButtonDown(1)) {
             if (configureEnabled) {
                 if (timeSinceM1 == 0)
-                    timeSinceM1 = Minecraft.getSystemTime();
+                    timeSinceM1 = now();
 
-                boolean singleClick = Minecraft.getSystemTime() - timeSinceM1 < 75;
+                boolean singleClick = now() - timeSinceM1 < 75;
                 if (singleClick) {
                     selectSlot(-1);
                 } else if (!hasSubGui()) {
@@ -354,7 +363,7 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
             mc.inGameHasFocus = true;
             mc.mouseHelper.grabMouseCursor();
             isClosing = true;
-            timeClosed = (long) (Minecraft.getSystemTime() - (1 - guiAnimationScale) * CLOSE_TIME);
+            timeClosed = (long) (now() - (1 - Math.max(0, Math.min(1, guiAnimationScale))) * CLOSE_TIME);
         }
     }
 
@@ -410,18 +419,21 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
                     slot.setForm(newForm, slot.data.isDBC, true);
             }
         }
+        // The animation progress is clamped to [0, 1] on both ends: a negative progress makes easeOutExpo explode,
+        // the scale goes to Infinity and the wheel never closes (opaque black overlay, invisible segments).
         if (isClosing && guiAnimationScale >= 0) {
-            float updateTime = (float) (Minecraft.getSystemTime() - timeClosed) / CLOSE_TIME;
-            updateTime = Math.min(1, updateTime);
+            float updateTime = (float) (now() - timeClosed) / CLOSE_TIME;
+            updateTime = Math.max(0, Math.min(1, updateTime));
             guiAnimationScale = (float) (1 - easeOutExpo(updateTime));
             if (guiAnimationScale <= 0.05)
                 close();
         } else if (guiAnimationScale < 1) {
-            float updateTime = (float) (Minecraft.getSystemTime() - timeOpened) / OPEN_TIME;
-            updateTime = Math.min(1, updateTime);
+            float updateTime = (float) (now() - timeOpened) / OPEN_TIME;
+            updateTime = Math.max(0, Math.min(1, updateTime));
 
             guiAnimationScale = (float) easeOutExpo(updateTime);
         }
+        guiAnimationScale = Math.max(0, Math.min(1, guiAnimationScale));
 
         BLUR_INTENSITY = guiAnimationScale * MAX_BLUR;
 
@@ -505,7 +517,7 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
     @Override
     public void keyTyped(char typedChar, int keyCode) {
         super.keyTyped(typedChar, keyCode);
-        boolean enoughTimeSinceClose = Minecraft.getSystemTime() - timeClosedSubGui > 50;
+        boolean enoughTimeSinceClose = now() - timeClosedSubGui > 50;
         if (keyCode == 1 && configureEnabled && enoughTimeSinceClose)
             configureEnabled = false;
     }
@@ -662,7 +674,7 @@ public class HUDFormWheel extends GuiNPCInterface implements ISubGuiListener {
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         super.mouseClicked(mouseX, mouseY, mouseButton);
 
-        boolean enoughTimeSinceClose = Minecraft.getSystemTime() - timeClosedSubGui > 50;
+        boolean enoughTimeSinceClose = now() - timeClosedSubGui > 50;
         if (configureEnabled && !hasSubGui() && enoughTimeSinceClose) {
             calculateHoveredSlot((float) this.width / 2, (float) this.height / 2, false);
         }
