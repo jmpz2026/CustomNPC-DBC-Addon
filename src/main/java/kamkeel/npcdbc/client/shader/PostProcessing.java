@@ -53,12 +53,14 @@ public class PostProcessing {
     public static boolean processBloom;
     public static boolean bloomSupported = true; // ← new flag
 
-    // Android's LTW wrapper (GLES underneath): the form wheel's background blur leaves the screen black at random
-    // there, and only there. The wheel keeps its plain dark background instead.
-    private static boolean wheelBlurUnsafe;
+    // Android's LTW wrapper (GLES underneath) remaps a framebuffer's attachments on every glDrawBuffers call. With
+    // MAIN's color texture also attached to the bloom framebuffer, the screen went black at random after the bloom or
+    // the form wheel blur ran, and only there. Under LTW none of those framebuffers are created: outlines and auras
+    // still draw, without glow, and the wheel keeps its plain dark background.
+    private static boolean ltw;
 
     public static boolean wheelBlurAvailable() {
-        return bloomSupported && !wheelBlurUnsafe && ShaderHelper.shadersEnabled();
+        return bloomSupported && ShaderHelper.shadersEnabled();
     }
 
     // Copy of the main framebuffer the bloom combine samples from: reading MAIN.framebufferTexture while
@@ -455,11 +457,11 @@ public class PostProcessing {
         hasInitialized = true;
         bloomSupported = true;
         final String glVersion = GL11.glGetString(GL11.GL_VERSION);
-        wheelBlurUnsafe = glVersion != null && glVersion.contains("LTW");
+        ltw = glVersion != null && glVersion.contains("LTW");
         stencilAvailable = detectStencil();
 
         // Minimal check: if FBOs or shaders aren’t supported, disable bloom entirely
-        if (!OpenGlHelper.framebufferSupported || !ShaderHelper.shadersEnabled()) {
+        if (ltw || !OpenGlHelper.framebufferSupported || !ShaderHelper.shadersEnabled()) {
             bloomSupported = false;
             return;
         }
