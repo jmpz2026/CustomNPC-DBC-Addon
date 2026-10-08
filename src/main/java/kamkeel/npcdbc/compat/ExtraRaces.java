@@ -28,10 +28,14 @@ public final class ExtraRaces {
 
     private static final Logger LOG = LogManager.getLogger("npcdbc-ExtraRaces");
     private static final String API = "dbr.machitos.razas.api.RazaApi";
+    private static final String LOGIC = "dbr.machitos.razas.logic.ExtraRaceLogic";
 
     private static MethodHandle attributeHandle;
     private static boolean lookedUp;
     private static boolean failed;
+
+    private static MethodHandle selectableHandle;
+    private static boolean selectableLookedUp;
 
     private ExtraRaces() {}
 
@@ -74,6 +78,36 @@ public final class ExtraRaces {
             }
         }
         return attributeHandle;
+    }
+
+    /**
+     * Same rule as the X form selector of DbrRazas: racial level reached and,
+     * for the God form, the God skill learned. {@code racialLevel} is the raw
+     * SklLvlX value (not minus one). Without DbrRazas nothing is selectable.
+     */
+    public static boolean isFormSelectable(int race, int form, int racialLevel, int godSkillLevel) {
+        if (!selectableLookedUp) {
+            selectableLookedUp = true;
+            try {
+                Class<?> logic = Class.forName(LOGIC);
+                selectableHandle = MethodHandles.publicLookup().findStatic(logic, "selectable",
+                    MethodType.methodType(boolean.class, int.class, int.class, int.class, int.class));
+            } catch (ClassNotFoundException e) {
+                LOG.info("DbrRazas not present: extra races have no DBC forms in the form wheel");
+            } catch (ReflectiveOperationException e) {
+                LOG.error("DbrRazas present but its ExtraRaceLogic.selectable does not match this addon", e);
+            }
+        }
+        if (selectableHandle == null) {
+            return false;
+        }
+        try {
+            return (boolean) selectableHandle.invokeExact(race, form, racialLevel, godSkillLevel);
+        } catch (Throwable t) {
+            LOG.error("DbrRazas selectable call failed, extra race forms disabled in the form wheel", t);
+            selectableHandle = null;
+            return false;
+        }
     }
 
     /** True if the player being ticked is in a custom form that cancels the racial ki drain. */

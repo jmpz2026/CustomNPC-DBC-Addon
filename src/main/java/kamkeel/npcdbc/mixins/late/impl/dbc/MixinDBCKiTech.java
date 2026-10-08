@@ -247,7 +247,7 @@ public abstract class MixinDBCKiTech {
             return true;
 
         if (dbc.selectedDBCForm != -1 && dbc.selectedDBCForm != JRMCoreH.State) {
-            if (state == 0 && (data.Race == DBCRace.NAMEKIAN || data.Race == DBCRace.HUMAN || data.Race == DBCRace.MAJIN))
+            if (state == 0 && (data.Race == DBCRace.NAMEKIAN || data.Race == DBCRace.HUMAN || data.Race == DBCRace.MAJIN || DBCRace.isExtraRace(data.Race)))
                 return true;
             else
                 return false;
