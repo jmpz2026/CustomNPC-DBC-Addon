@@ -2,6 +2,7 @@ package kamkeel.npcdbc.network.packets.player.form;
 
 import JinRyuu.JRMCore.JRMCoreH;
 import io.netty.buffer.ByteBuf;
+import kamkeel.npcdbc.compat.ExtraRaces;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.constants.DBCSettings;
@@ -98,13 +99,12 @@ public final class DBCSelectForm extends AbstractPacket {
                 JRMCoreH.PlyrSettingsRem(player, DBCSettings.POTENTIAL_UNLEASHED);
                 JRMCoreH.PlyrSettingsRem(player, DBCSettings.ULTRA_INSTINCT);
                 JRMCoreH.PlyrSettingsRem(player, DBCSettings.GOD_OF_DESTRUCTION);
-                // Extra races (DbrRazas) ascend to the form picked in the X selector; the client checks it before sending
-                if (DBCRace.isExtraRace(dbc.Race)) {
-                    dbc.setSetting(1, selected);
-                    dbc.Settings = dbc.getRawCompound().getString("jrmcSettings"); // saveNBTData writes this field back
-                }
+                if (DBCRace.isExtraRace(dbc.Race))
+                    ExtraRaces.selectForm(dbc, selected);
             }
-            if (formID != -1)
+            if (ExtraRaces.isForm(dbc.Race, formID)) // lang key: the client translates it to its own language
+                NetworkUtility.sendServerMessage(player, "§a", "npcdbc.formSelect", " ", "§d", ExtraRaces.formLangKey(dbc.Race, formID));
+            else if (formID != -1)
                 NetworkUtility.sendServerMessage(player, "§a", "npcdbc.formSelect", " ", DBCForm.getMenuName(dbc.Race, formID, dbc.isForm(DBCForm.Divine)));
         } else if (formID != -1 && FormController.getInstance().has(formID)) {
             if (formID == formData.selectedForm)

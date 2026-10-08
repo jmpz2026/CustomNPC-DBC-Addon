@@ -1,43 +1,125 @@
 package kamkeel.npcdbc.compat;
 
+import JinRyuu.JRMCore.JRMCoreH;
 import kamkeel.npcdbc.CommonProxy;
+import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.data.PlayerDBCInfo;
+import kamkeel.npcdbc.data.dbcdata.DBCData;
 import kamkeel.npcdbc.util.DBCUtils;
 import kamkeel.npcdbc.util.PlayerDataUtil;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.StatCollector;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.Map;
 
 /**
- * Bridge to the extra races that DbrRazas adds to JRMCore (race 6 onwards).
+ * Single entry point for the extra races that DbrRazas adds to JRMCore (race
+ * 6 onwards). Every per-race switch in this addon (DBCForm, DBCData, the
+ * ascend mixins) has one {@code isExtraRace} branch that delegates here, so a
+ * new extra race or rule only touches this class.
  *
- * JRMCore has one attribute formula per race and this addon repeats that
- * switch for custom forms; an extra race has no formula here, so it is asked
- * to DbrRazas through reflection. Soft dependency: without DbrRazas loaded the
- * extra race gets its base attribute and nothing crashes.
+ * Rules (which forms are unlocked, attributes) are always asked to DbrRazas
+ * through its public RazaApi, never copied here. Forms are JRMCore's own
+ * table for the race: state = index, 0 = base. Soft dependency: without
+ * DbrRazas an extra race has no forms in the wheel and its base attribute.
  *
  * The other direction also lives here: DbrRazas replaces JRMCore's ki regen
  * call for its races, so the divine-drain guard this addon injects into
- * getKiRegen* never runs for them. DbrRazas calls these public helpers instead.
+ * getKiRegen* never runs for them, and its ascend key needs the form picked in
+ * the wheel. DbrRazas calls the public helpers at the bottom.
  */
 public final class ExtraRaces {
 
     private static final Logger LOG = LogManager.getLogger("npcdbc-ExtraRaces");
     private static final String API = "dbr.machitos.razas.api.RazaApi";
-    private static final String LOGIC = "dbr.machitos.razas.logic.ExtraRaceLogic";
 
-    private static MethodHandle attributeHandle;
-    private static boolean lookedUp;
-    private static boolean failed;
-
-    private static MethodHandle selectableHandle;
-    private static boolean selectableLookedUp;
+    private static final SoftMethod ATTRIBUTE = new SoftMethod(LOG, API, "getAttribute", MethodType.methodType(int.class,
+        EntityPlayer.class, int[].class, int.class, int.class, int.class, int.class, int.class, int.class, boolean.class));
+    private static final SoftMethod SELECTABLE = new SoftMethod(LOG, API, "isFormSelectable",
+        MethodType.methodType(boolean.class, int.class, int.class, int.class, int.class));
 
     private ExtraRaces() {}
+
+    // ------------------------------------------------------------------ forms
+
+    /** Racial form of the race (1 .. last index of its JRMCore table; 0 is base). */
+    public static boolean isForm(int race, int form) {
+        return DBCRace.isExtraRace(race) && form >= 1 && form < JRMCoreH.trans[race].length;
+    }
+
+    /** Lang key of the form name (DbrRazas ships it and LangOverride localizes it). */
+    public static String formLangKey(int race, int form) {
+        return JRMCoreH.tjrmc + "." + JRMCoreH.TransNms[race][form];
+    }
+
+    /** Form name for menus, in the client's language. */
+    public static String getMenuName(int race, int form) {
+        return isForm(race, form) ? "§d" + StatCollector.translateToLocal(formLangKey(race, form)) : null;
+    }
+
+    /** All racial forms of the race, for editors (no unlock check). */
+    public static void putAllForms(Map<Integer, String> forms, int race) {
+        for (int i = 1; isForm(race, i); i++)
+            forms.put(i, getMenuName(race, i));
+    }
+
+    /**
+     * Forms the player can pick, same rule as DbrRazas' X selector.
+     * {@code racialSkill} is the value DBCData uses (SklLvlX - 1).
+     */
+    public static void putUnlockedForms(Map<Integer, String> forms, int race, int racialSkill, int godSkill) {
+        for (int i = 1; isForm(race, i); i++) {
+            if (isFormSelectable(race, i, racialSkill + 1, godSkill))
+                forms.put(i, getMenuName(race, i));
+        }
+    }
+
+    /** Previous form in the wheel (the one JRMCore descends to), or -1 at the bottom of a branch. */
+    public static int getParent(int race, int form) {
+        if (!isForm(race, form))
+            return -1;
+        int parent = JRMCoreH.transformationDescendToFormID[race][form];
+        return parent > 0 ? parent : -1;
+    }
+
+    /** Next unlocked form in the wheel (the first one that descends to this one), or -1. */
+    public static int getChild(int race, int form, DBCData data) {
+        for (int i = 1; isForm(race, i); i++) {
+            if (i != form && JRMCoreH.transformationDescendToFormID[race][i] == form && data.isDBCFormUnlocked(i))
+                return i;
+        }
+        return -1;
+    }
+
+    // ------------------------------------------------------------------ ascend
+
+    /**
+     * Server, form picked in the wheel: store it as the X selection (setting
+     * 1), which is what DbrRazas ascends to. Settings is refreshed because
+     * saveNBTData writes that field back over the compound.
+     */
+    public static void selectForm(DBCData data, int form) {
+        if (!isForm(data.Race, form))
+            return;
+        data.setSetting(1, form);
+        data.Settings = data.getRawCompound().getString("jrmcSettings");
+    }
+
+    /**
+     * Server, handleDBCascend with a form picked in the wheel. Returns the
+     * state the ascend must start from: base, so DbrRazas jumps straight to
+     * the picked form from any form, like the original races do with the wheel.
+     */
+    public static byte prepareAscend(DBCData data, int form) {
+        selectForm(data, form);
+        return 0;
+    }
+
+    // ------------------------------------------------------------------ attributes
 
     /**
      * Attribute of an extra race in its current racial form, before the custom
@@ -47,67 +129,37 @@ public final class ExtraRaces {
      */
     public static int getAttribute(EntityPlayer player, int[] currAttributes, int attribute, int state, int race,
                                    int skillX, int mysticLvl, int powerType, boolean neutralizeBase) {
-        MethodHandle h = handle();
+        MethodHandle h = ATTRIBUTE.get();
         if (h != null) {
             try {
                 return (int) h.invokeExact(player, currAttributes, attribute, state, race, skillX, mysticLvl, powerType,
                     neutralizeBase);
             } catch (Throwable t) {
-                if (!failed) {
-                    failed = true;
-                    LOG.error("DbrRazas attribute call failed, using the base attribute from now on", t);
-                }
-                attributeHandle = null;
+                ATTRIBUTE.disable(t);
             }
         }
         return currAttributes[attribute];
     }
 
-    private static MethodHandle handle() {
-        if (!lookedUp) {
-            lookedUp = true;
+    /** DbrRazas' unlock rule. {@code racialLevel} is the raw SklLvlX value. */
+    private static boolean isFormSelectable(int race, int form, int racialLevel, int godSkillLevel) {
+        MethodHandle h = SELECTABLE.get();
+        if (h != null) {
             try {
-                Class<?> api = Class.forName(API);
-                attributeHandle = MethodHandles.publicLookup().findStatic(api, "getAttribute", MethodType.methodType(int.class,
-                    EntityPlayer.class, int[].class, int.class, int.class, int.class, int.class, int.class, int.class,
-                    boolean.class));
-            } catch (ClassNotFoundException e) {
-                LOG.info("DbrRazas not present: extra races use their base attribute in custom forms");
-            } catch (ReflectiveOperationException e) {
-                LOG.error("DbrRazas present but its RazaApi does not match this addon", e);
+                return (boolean) h.invokeExact(race, form, racialLevel, godSkillLevel);
+            } catch (Throwable t) {
+                SELECTABLE.disable(t);
             }
         }
-        return attributeHandle;
+        return false;
     }
 
-    /**
-     * Same rule as the X form selector of DbrRazas: racial level reached and,
-     * for the God form, the God skill learned. {@code racialLevel} is the raw
-     * SklLvlX value (not minus one). Without DbrRazas nothing is selectable.
-     */
-    public static boolean isFormSelectable(int race, int form, int racialLevel, int godSkillLevel) {
-        if (!selectableLookedUp) {
-            selectableLookedUp = true;
-            try {
-                Class<?> logic = Class.forName(LOGIC);
-                selectableHandle = MethodHandles.publicLookup().findStatic(logic, "selectable",
-                    MethodType.methodType(boolean.class, int.class, int.class, int.class, int.class));
-            } catch (ClassNotFoundException e) {
-                LOG.info("DbrRazas not present: extra races have no DBC forms in the form wheel");
-            } catch (ReflectiveOperationException e) {
-                LOG.error("DbrRazas present but its ExtraRaceLogic.selectable does not match this addon", e);
-            }
-        }
-        if (selectableHandle == null) {
-            return false;
-        }
-        try {
-            return (boolean) selectableHandle.invokeExact(race, form, racialLevel, godSkillLevel);
-        } catch (Throwable t) {
-            LOG.error("DbrRazas selectable call failed, extra race forms disabled in the form wheel", t);
-            selectableHandle = null;
-            return false;
-        }
+    // ------------------------------------------------------------------ called by DbrRazas
+
+    /** Client: DBC form picked in the form wheel, or -1. */
+    public static int getClientWheelForm() {
+        PlayerDBCInfo info = PlayerDataUtil.getClientDBCInfo();
+        return info != null ? info.selectedDBCForm : -1;
     }
 
     /** True if the player being ticked is in a custom form that cancels the racial ki drain. */
