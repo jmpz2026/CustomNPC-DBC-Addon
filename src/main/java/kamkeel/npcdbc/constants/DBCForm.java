@@ -182,6 +182,10 @@ public class DBCForm {
 
             else if (form == MajinGod && shiftDown)
                 return data.hasForm(MajinPure) ? MajinPure : data.hasForm(MajinFullPower) ? MajinFullPower : MajinEvil;
+        } else if (DBCRace.isExtraRace(race)) {
+            byte[] descend = JRMCoreH.transformationDescendToFormID[race];
+            if (form > 0 && form < descend.length && descend[form] > 0)
+                return descend[form];
         }
         return -1;
     }
@@ -260,6 +264,12 @@ public class DBCForm {
                 return !shiftDown ? MajinPure : MajinGod;
             else if (form == MajinPure && shiftDown)
                 return MajinGod;
+        } else if (DBCRace.isExtraRace(race)) {
+            byte[] descend = JRMCoreH.transformationDescendToFormID[race];
+            for (int i = 1; i < descend.length; i++) {
+                if (i != form && descend[i] == form && data.isDBCFormUnlocked(i))
+                    return i;
+            }
         }
         return -1;
     }
@@ -331,6 +341,9 @@ public class DBCForm {
                 name = "§dPure";
             else if (form == MajinGod)
                 name = "§cGod";
+        } else if (DBCRace.isExtraRace(race)) {
+            if (form > 0 && form < JRMCoreH.TransNms[race].length)
+                name = "§d" + JRMCoreH.trl("jrmc", JRMCoreH.TransNms[race][form]);
         }
 
         if (form == Mystic)

@@ -286,6 +286,9 @@ public class MixinDBCPacketHandler {
                     }
 
 
+                } else if (DBCRace.isExtraRace(race)) {
+                    // DbrRazas resolves the ascend later from the X selection (setting 1 = form index)
+                    data.setSetting(1, selected);
                 }
             }
             dbc.selectedDBCForm = -1;

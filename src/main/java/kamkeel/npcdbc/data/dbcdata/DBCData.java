@@ -11,6 +11,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.npcdbc.api.aura.IAura;
 import kamkeel.npcdbc.api.form.IForm;
 import kamkeel.npcdbc.api.outline.IOutline;
+import kamkeel.npcdbc.compat.ExtraRaces;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.constants.DBCSettings;
@@ -546,6 +547,12 @@ public class    DBCData extends DBCDataUniversal implements IAuraData {
                 dbcForms.put(MajinPure, "§dPure");
             if (racialSkill >= 5 && godSkill >= 1)
                 dbcForms.put(MajinGod, "§cGod");
+        } else if (DBCRace.isExtraRace(race)) {
+            // Extra races (DbrRazas): state = index in JRMCore's table, unlocked like the X selector
+            for (int i = 1; i < JRMCoreH.trans[race].length; i++) {
+                if (ExtraRaces.isFormSelectable(race, i, racialSkill + 1, godSkill))
+                    dbcForms.put(i, DBCForm.getMenuName(race, i, false));
+            }
         }
         if (JRMCoreH.SklLvl(10) > 0)
             dbcForms.put(Mystic, "Mystic");
