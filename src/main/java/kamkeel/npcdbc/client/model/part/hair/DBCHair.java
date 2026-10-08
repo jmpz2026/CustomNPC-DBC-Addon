@@ -13,7 +13,6 @@ import kamkeel.npcdbc.data.form.Form;
 import kamkeel.npcdbc.data.form.FormDisplay;
 import kamkeel.npcdbc.data.npc.DBCDisplay;
 import kamkeel.npcdbc.mixins.late.INPCDisplay;
-import kamkeel.npcdbc.client.utils.RLCache;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.client.ClientProxy;
 import noppes.npcs.client.model.ModelMPM;
@@ -594,7 +593,7 @@ public class DBCHair extends ModelHairRenderer {
         ColorMode.applyModelColor(hairColor, this.base.alpha, ModelDBC.isHurt);
         String HDDir = CustomNpcPlusDBC.ID + ":textures/hd/";
         boolean HD = ConfigDBCClient.EnableHDTextures;
-        ClientProxy.bindTexture(RLCache.get((HD ? HDDir + "base/" : "jinryuumodscore:gui/") + "normall.png"));
+        ClientProxy.bindTexture(new ResourceLocation((HD ? HDDir + "base/" : "jinryuumodscore:gui/") + "normall.png"));
         if ((isRaditz || isSSJ3) && effectMajinHair) {
             renderSSJ3Hair(isSSJ3);
             return;

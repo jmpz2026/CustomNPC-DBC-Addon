@@ -43,15 +43,6 @@ public class PostProcessing {
     public static int blankTexture;
 
     public static int BLOOM_BUFFERS_LENGTH = 10;
-
-    // === NpcDbcResu performance tuning ===
-    // Extra downscale applied uniformly to the whole bloom mip chain (buffer
-    // allocation in init + every viewport in bloom). 0 = vanilla half-res base,
-    // 1 = quarter-res base (~4x fewer bloom pixels, slightly softer glow).
-    public static int BLOOM_RES_SHIFT = 1;
-    // Hard cap on bloom mip levels processed. init also self-limits by mip size.
-    public static int MAX_BLOOM_LEVELS = 6;
-
     public static int[] bloomBuffers = new int[BLOOM_BUFFERS_LENGTH];
     public static int[] bloomTextures = new int[bloomBuffers.length];
     public static int[] bloomTextures2 = new int[bloomBuffers.length];
@@ -73,7 +64,7 @@ public class PostProcessing {
     private static boolean isScissorEnabled;
 
     public static void startBlooming(boolean clearBloomBuffer) {
-        if (!bloomSupported || !ConfigDBCClient.bloomEnabled() || !ShaderHelper.shadersEnabled())
+        if (!bloomSupported || !ConfigDBCClient.EnableBloom || !ShaderHelper.shadersEnabled())
             return;
 
         PREVIOUS_BUFFER = glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
@@ -168,17 +159,16 @@ public class PostProcessing {
         glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[0]);
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
-        glViewport(0, 0, width >> (1 + BLOOM_RES_SHIFT), height >> (1 + BLOOM_RES_SHIFT));
+        glViewport(0, 0, width >> 1, height >> 1);
         useShader(downsample13);
         renderQuad(MAIN_BLOOM_TEXTURE, 0, 0, width, height);
         blurFilter(bloomTextures[0], 2.5f, 0, 0, width, height);
         int downSamples = 0;
-        int maxLevels = Math.min(bloomBuffers.length, MAX_BLOOM_LEVELS);
-        for (int i = 0; i < maxLevels; i++) {
+        for (int i = 0; i < bloomBuffers.length; i++) {
             // Stop at the last allocated mip: bloomBuffers[i + 1] == 0 would bind the default framebuffer
             if (i + 1 >= bloomBuffers.length || bloomBuffers[i] <= 0 || bloomBuffers[i + 1] <= 0)
                 break;
-            int mipWidth = width >> (i + 2 + BLOOM_RES_SHIFT), mipHeight = height >> (i + 2 + BLOOM_RES_SHIFT);
+            int mipWidth = width >> (i + 2), mipHeight = height >> (i + 2);
             glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[i + 1]);
             glViewport(0, 0, mipWidth, mipHeight);
             useShader(downsample13);
@@ -189,7 +179,7 @@ public class PostProcessing {
         // Up sampling the mip chain
         for (int i = downSamples; i > 0; i--) {
             int lower = bloomTextures[i];
-            int mipWidth = width >> (i + BLOOM_RES_SHIFT), mipHeight = height >> (i + BLOOM_RES_SHIFT);
+            int mipWidth = width >> (i), mipHeight = height >> (i);
             glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[i - 1]);
 
             drawToBuffers(2);
@@ -424,10 +414,6 @@ public class PostProcessing {
     public static void init(int width, int height) {
         hasInitialized = true;
 
-        // Apply quality tunables from config (client-side only entry point).
-        BLOOM_RES_SHIFT = ConfigDBCClient.BloomResShift;
-        MAX_BLOOM_LEVELS = ConfigDBCClient.MaxBloomLevels;
-
         // Minimal check: if FBOs or shaders aren’t supported, disable bloom entirely
         if (!OpenGlHelper.framebufferSupported || !ShaderHelper.shadersEnabled()) {
             bloomSupported = false;
@@ -467,10 +453,9 @@ public class PostProcessing {
         drawToBuffers(0, 2);
         glClearColor(0, 0, 0, 1f);
         glClear(GL_COLOR_BUFFER_BIT);
-        int maxInitLevels = Math.min(bloomBuffers.length, MAX_BLOOM_LEVELS);
-        for (int i = 0; i < maxInitLevels; i++) {
-            int mipWidth = width >> (i + 1 + BLOOM_RES_SHIFT);
-            int mipHeight = height >> (i + 1 + BLOOM_RES_SHIFT);
+        for (int i = 0; i < bloomBuffers.length; i++) {
+            int mipWidth = width >> (i + 1);
+            int mipHeight = height >> (i + 1);
             if (mipWidth < 15 || mipHeight < 7)
                 break;
 
