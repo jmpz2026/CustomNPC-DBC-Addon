@@ -12,7 +12,6 @@ import kamkeel.npcdbc.data.form.FormStackable;
 import kamkeel.npcdbc.network.DBCPacketHandler;
 import kamkeel.npcdbc.network.packets.player.form.DBCSaveFormWheel;
 import kamkeel.npcdbc.network.packets.player.form.DBCSelectForm;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 
 import static org.lwjgl.opengl.GL11.glScaled;
@@ -65,7 +64,7 @@ class FormWheelSegment extends WheelSegment {
         if (parent.hoveredSlot == index)
             parent.selectSlot(-1);
 
-        parent.timeClosedSubGui = Minecraft.getSystemTime();
+        parent.timeClosedSubGui = HUDFormWheel.now();
         icon = null;
     }
 

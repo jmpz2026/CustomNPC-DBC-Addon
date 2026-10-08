@@ -6,6 +6,7 @@ import JinRyuu.JRMCore.client.config.jrmc.JGConfigClientSettings;
 import JinRyuu.JRMCore.i.ExtendedPlayer;
 import kamkeel.npcdbc.client.ClientConstants;
 import kamkeel.npcdbc.client.model.part.hair.DBCHair;
+import kamkeel.npcdbc.client.shader.PostProcessing;
 import kamkeel.npcdbc.client.shader.ShaderHelper;
 import kamkeel.npcdbc.client.shader.ShaderResources;
 import kamkeel.npcdbc.constants.DBCForm;
@@ -51,6 +52,7 @@ public class OutlineRenderer {
             uniform1f("noiseSpeed", outline.speed);
             uniform1f("throbSpeed", outline.pulsingSpeed);
         });
+        boolean invertedHull = beginInvertedHull();
         float scale = 1.025f, yScale = 1.025f, outlineSize = isArm ? 1f : outline.size;
         ItemStack chestPlate = player.getEquipmentInSlot(3);
         if (chestPlate != null) {
@@ -115,6 +117,7 @@ public class OutlineRenderer {
             disableStencilWriting(player.getEntityId() % 256, false);
         }
 
+        endInvertedHull(invertedHull);
         releaseShader();
         ///////////////////////////////////
         ///////////////////////////////////
@@ -174,6 +177,7 @@ public class OutlineRenderer {
             uniform1f("noiseSpeed", outline.speed);
             uniform1f("throbSpeed", outline.pulsingSpeed);
         });
+        boolean invertedHull = beginInvertedHull();
         ///////////////////////////////////
         ///////////////////////////////////
         //Outer
@@ -218,11 +222,30 @@ public class OutlineRenderer {
         ///////////////////////////////////
         ///////////////////////////////////
         glPopMatrix();
+        endInvertedHull(invertedHull);
         releaseShader();
         GL11.glEnable(GL_LIGHTING);
         GL11.glDisable(GL_BLEND);
         GL11.glEnable(GL_TEXTURE_2D);
         ClientConstants.renderingOutline = false;
+    }
+
+    /**
+     * Without a stencil buffer the outline cannot be cut out of the body and would paint the whole
+     * silhouette. Draw only the back faces of the enlarged copy instead: the body hides the inside by depth
+     * and what is left is the rim.
+     */
+    private static boolean beginInvertedHull() {
+        if (PostProcessing.stencilAvailable)
+            return false;
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        return true;
+    }
+
+    private static void endInvertedHull(boolean active) {
+        if (active)
+            glCullFace(GL_BACK);
     }
 
     public static void renderHair(EntityPlayer player, RenderPlayerJBRA renderer) {
