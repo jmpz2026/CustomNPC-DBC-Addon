@@ -10,6 +10,7 @@ import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalByteRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import kamkeel.npcdbc.CommonProxy;
+import kamkeel.npcdbc.compat.ExtraRaces;
 import kamkeel.npcdbc.config.ConfigDBCEffects;
 import kamkeel.npcdbc.config.ConfigDBCGameplay;
 import kamkeel.npcdbc.constants.DBCRace;
@@ -287,8 +288,7 @@ public class MixinDBCPacketHandler {
 
 
                 } else if (DBCRace.isExtraRace(race)) {
-                    // DbrRazas resolves the ascend later from the X selection (setting 1 = form index)
-                    data.setSetting(1, selected);
+                    st.set(ExtraRaces.prepareAscend(data, selected));
                 }
             }
             dbc.selectedDBCForm = -1;

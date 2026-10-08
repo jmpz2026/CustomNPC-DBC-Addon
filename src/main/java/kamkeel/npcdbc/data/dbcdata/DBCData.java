@@ -548,11 +548,7 @@ public class    DBCData extends DBCDataUniversal implements IAuraData {
             if (racialSkill >= 5 && godSkill >= 1)
                 dbcForms.put(MajinGod, "§cGod");
         } else if (DBCRace.isExtraRace(race)) {
-            // Extra races (DbrRazas): state = index in JRMCore's table, unlocked like the X selector
-            for (int i = 1; i < JRMCoreH.trans[race].length; i++) {
-                if (ExtraRaces.isFormSelectable(race, i, racialSkill + 1, godSkill))
-                    dbcForms.put(i, DBCForm.getMenuName(race, i, false));
-            }
+            ExtraRaces.putUnlockedForms(dbcForms, race, racialSkill, godSkill);
         }
         if (JRMCoreH.SklLvl(10) > 0)
             dbcForms.put(Mystic, "Mystic");
