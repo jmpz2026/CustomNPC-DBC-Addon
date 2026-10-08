@@ -53,6 +53,23 @@ public class PostProcessing {
     public static boolean processBloom;
     public static boolean bloomSupported = true; // ← new flag
 
+    public static boolean wheelBlurAvailable() {
+        return bloomSupported && ShaderHelper.shadersEnabled();
+    }
+
+    // Copy of the main framebuffer the bloom combine samples from: reading MAIN.framebufferTexture while
+    // MAIN is the draw target is a feedback loop, undefined behavior that some drivers resolve with a stale
+    // read that wipes whatever was drawn since (the Y form wheel flicker).
+    public static int SCENE_COPY_TEXTURE;
+    private static int sceneCopyWidth, sceneCopyHeight;
+
+    // Whether the main framebuffer has a stencil buffer. Outlines and auras mask the body with it; without
+    // one the outline falls back to an inverted hull instead of painting the whole silhouette.
+    public static boolean stencilAvailable = true;
+
+    // OptiFine keeps its own path untouched: its shaders bind their FBO for the whole world pass.
+    private static final boolean OPTIFINE = classExists("optifine.OptiFineForgeTweaker");
+
     public static FloatBuffer DEFAULT_MODELVIEW = BufferUtils.createFloatBuffer(16);
     public static FloatBuffer DEFAULT_PROJECTION = BufferUtils.createFloatBuffer(16);
     public static Minecraft mc = Minecraft.getMinecraft();
@@ -67,7 +84,13 @@ public class PostProcessing {
         if (!bloomSupported || !ConfigDBCClient.EnableBloom || !ShaderHelper.shadersEnabled())
             return;
 
-        PREVIOUS_BUFFER = glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
+        int currentBuffer = glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
+        // Another pipeline (an Iris shaderpack) owns the world render target: whatever lands in MAIN is
+        // overwritten by its final pass. Draw the effect straight into its target, without bloom.
+        if (!OPTIFINE && !ClientConstants.renderingGUI && MAIN != null && currentBuffer != MAIN.framebufferObject)
+            return;
+
+        PREVIOUS_BUFFER = currentBuffer;
         glBindFramebuffer(GL_FRAMEBUFFER, MAIN_BLOOM_BUFFER);
         if (clearBloomBuffer) {
             drawToBuffers(2);
@@ -91,8 +114,12 @@ public class PostProcessing {
             bloom(1.5f, false);
         }
 
-        if (bloomSupported && ShaderHelper.shadersEnabled() &&
-            mc.currentScreen instanceof HUDFormWheel && HUDFormWheel.BLUR_ENABLED) {
+        if (wheelBlurAvailable() &&
+            mc.currentScreen instanceof HUDFormWheel && HUDFormWheel.BLUR_ENABLED
+            // The first frame after opening still has intensity 0; the shader divides by it (black frame on Mesa).
+            && HUDFormWheel.BLUR_INTENSITY > 0.01f) {
+            // Runs right before the HUD and the GUI: hand them back the state they had.
+            GLStateSnapshot snapshot = GLStateSnapshot.capture();
             Framebuffer buff = getMainBuffer();
             GL11.glMatrixMode(GL11.GL_MODELVIEW);
             GL11.glLoadIdentity();
@@ -111,10 +138,7 @@ public class PostProcessing {
             blurHorizontal(BLUR_TEXTURE, HUDFormWheel.BLUR_INTENSITY, 0, 0, mc.displayWidth, mc.displayHeight);
             releaseShader();
 
-            glEnable(GL_DEPTH_TEST);
-            glDepthMask(true);
-            glEnable(GL_TEXTURE_2D);
-            glEnable(GL_COLOR_MATERIAL);
+            snapshot.restore();
         }
 
         if (isScissorEnabled)
@@ -134,6 +158,7 @@ public class PostProcessing {
         // inherits whatever GL state is left behind. Snapshot it so the HUD sees exactly
         // what it would see with bloom off (fixes black chat text on strict drivers like Mesa).
         GLStateSnapshot snapshot = resetGLState ? null : GLStateSnapshot.capture();
+        int previousBuffer = glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
 
         updateViewportDimensions();
         int width = VIEWPORT_WIDTH, height = VIEWPORT_HEIGHT;
@@ -167,7 +192,12 @@ public class PostProcessing {
         glViewport(0, 0, width >> (first + 1), height >> (first + 1));
         useShader(downsample13);
         renderQuad(MAIN_BLOOM_TEXTURE, 0, 0, width, height);
-        blurFilter(bloomTextures[first], 2.5f, 0, 0, width, height);
+        // Separable blur ping-pongs through the second attachment instead of reading the texture it writes.
+        drawToBuffers(2);
+        blurVertical(bloomTextures[first], 2.5f, 0, 0, width, height);
+        resetDrawBuffer();
+        blurHorizontal(bloomTextures2[first], 2.5f, 0, 0, width, height);
+        releaseShader();
         int maxLevels = ConfigDBCClient.BloomMaxLevels;
         int downSamples = first;
         for (int i = first; i < bloomBuffers.length; i++) {
@@ -205,11 +235,12 @@ public class PostProcessing {
         // Combine into default buffer
         MAIN.bindFramebuffer(false);
         glViewport(0, 0, width, height);
+        int sceneTexture = copyScene(width, height);
         useShader(additiveCombine, () -> {
             uniformTexture("bloomTexture", 2, bloomTextures[0]);
             uniform1f("exposure", lightExposure);
         });
-        renderQuad(MAIN.framebufferTexture, 0, 0, width, height);
+        renderQuad(sceneTexture, 0, 0, width, height);
         releaseShader();
 
         glEnable(GL_DEPTH_TEST);
@@ -234,7 +265,12 @@ public class PostProcessing {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        MAIN.bindFramebuffer(false);
+        if (OPTIFINE) {
+            MAIN.bindFramebuffer(false);
+        } else {
+            glBindFramebuffer(GL_FRAMEBUFFER, previousBuffer);
+            glViewport(0, 0, width, height);
+        }
         processBloom = false;
 
         if (snapshot != null)
@@ -421,6 +457,8 @@ public class PostProcessing {
 
     public static void init(int width, int height) {
         hasInitialized = true;
+        bloomSupported = true;
+        stencilAvailable = detectStencil();
 
         // Minimal check: if FBOs or shaders aren’t supported, disable bloom entirely
         if (!OpenGlHelper.framebufferSupported || !ShaderHelper.shadersEnabled()) {
@@ -546,6 +584,8 @@ public class PostProcessing {
         for (int i = 0; i < bloomBuffers.length; i++) {
             if (bloomTextures[i] > 0)
                 TextureUtil.deleteTexture(bloomTextures[i]);
+            if (bloomTextures2[i] > 0)
+                TextureUtil.deleteTexture(bloomTextures2[i]);
             if (bloomBuffers[i] > 0)
                 OpenGlHelper.func_153174_h(bloomBuffers[i]);
         }
@@ -556,9 +596,16 @@ public class PostProcessing {
                 TextureUtil.deleteTexture(auraTextures[i]);
         }
         OpenGlHelper.func_153174_h(MISC_POST_PROCESSING_BUFFER);
+        OpenGlHelper.func_153174_h(MAIN_BLOOM_BUFFER);
 
         bloomBuffers = new int[BLOOM_BUFFERS_LENGTH];
         bloomTextures = new int[bloomBuffers.length];
+        bloomTextures2 = new int[bloomBuffers.length];
+
+        if (SCENE_COPY_TEXTURE > 0) {
+            TextureUtil.deleteTexture(SCENE_COPY_TEXTURE);
+            SCENE_COPY_TEXTURE = 0;
+        }
 
         TextureUtil.deleteTexture(MAIN_BLOOM_TEXTURE);
         TextureUtil.deleteTexture(DEPTH_TEXTURE);
@@ -568,8 +615,8 @@ public class PostProcessing {
 
     public static void copyBuffer(int copyFBO, int pasteFBO, int width, int height, int bufferBits) {
         int previousBuffer = glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
-        glBindFramebuffer(GL_READ_BUFFER, copyFBO);
-        glBindFramebuffer(GL_DRAW_BUFFER, pasteFBO);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, copyFBO);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pasteFBO);
         GL30.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, bufferBits, GL_NEAREST);
 
         int status = GL30.glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -613,6 +660,54 @@ public class PostProcessing {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Failed to write PNG file: " + e.getMessage());
+        }
+    }
+
+    /** Copies the bound main framebuffer into {@link #SCENE_COPY_TEXTURE} and returns it. */
+    private static int copyScene(int width, int height) {
+        if (SCENE_COPY_TEXTURE <= 0)
+            SCENE_COPY_TEXTURE = glGenTextures();
+        glBindTexture(GL_TEXTURE_2D, SCENE_COPY_TEXTURE);
+        if (sceneCopyWidth != width || sceneCopyHeight != height) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL11.GL_RGBA8, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+            sceneCopyWidth = width;
+            sceneCopyHeight = height;
+        }
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+        return SCENE_COPY_TEXTURE;
+    }
+
+    private static boolean detectStencil() {
+        if (OPTIFINE)
+            return true;
+        try {
+            Framebuffer buffer = getMainBuffer();
+            int previous = glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
+            boolean stencil;
+            if (buffer != null && buffer.framebufferObject >= 0) {
+                glBindFramebuffer(GL_FRAMEBUFFER, buffer.framebufferObject);
+                stencil = glGetFramebufferAttachmentParameteri(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE) != GL_NONE;
+            } else {
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                stencil = glGetFramebufferAttachmentParameteri(GL_FRAMEBUFFER, GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE) > 0;
+            }
+            glBindFramebuffer(GL_FRAMEBUFFER, previous);
+            return stencil;
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    private static boolean classExists(String name) {
+        try {
+            Class.forName(name, false, PostProcessing.class.getClassLoader());
+            return true;
+        } catch (Throwable t) {
+            return false;
         }
     }
 
