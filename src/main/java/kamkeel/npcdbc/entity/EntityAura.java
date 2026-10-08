@@ -1,5 +1,6 @@
 package kamkeel.npcdbc.entity;
 
+import kamkeel.npcdbc.client.utils.RLCache;
 import JinRyuu.DragonBC.common.Npcs.EntityAuraRing;
 import JinRyuu.JRMCore.client.config.jrmc.JGConfigClientSettings;
 import cpw.mods.fml.relauncher.Side;
@@ -78,7 +79,7 @@ public class EntityAura extends Entity {
             auraData = ((INPCDisplay) ((EntityNPCInterface) entity).display).getDBCDisplay();
         }
         setPositionAndRotation(entity.posX, entity.posY, entity.posZ, entity.rotationYaw, entity.rotationPitch);
-        text1 = new ResourceLocation("jinryuudragonbc:aura.png");
+        text1 = RLCache.get("jinryuudragonbc:aura.png");
     }
 
     public EntityAura load(boolean all) {
@@ -213,7 +214,7 @@ public class EntityAura extends Entity {
         AuraDisplay display = aura.display;
         color1 = 16646144;
 
-        text1 = new ResourceLocation("jinryuudragonbc:aurak.png");
+        text1 = RLCache.get("jinryuudragonbc:aurak.png");
         renderPass = 0;
         maxAlpha = 0.1f;
 
@@ -243,44 +244,44 @@ public class EntityAura extends Entity {
         String auraDir = "jinryuudragonbc:";
         if (type3D == EnumAuraTypes3D.SaiyanGod) {
             maxAlpha = 0.2f;
-            text1 = new ResourceLocation(auraDir + "aurai.png");
-            text2 = new ResourceLocation(auraDir + "auraj.png");
+            text1 = RLCache.get(auraDir + "aurai.png");
+            text2 = RLCache.get(auraDir + "auraj.png");
             color2 = 16747301;
         } else if (type3D == EnumAuraTypes3D.SaiyanBlue) {
             maxAlpha = 0.05F;
-            text1 = new ResourceLocation(auraDir + "aurag.png");
-            text3 = new ResourceLocation(auraDir + "auragb.png");
+            text1 = RLCache.get(auraDir + "aurag.png");
+            text3 = RLCache.get(auraDir + "auragb.png");
             color3 = 15727354;
         } else if (type3D == EnumAuraTypes3D.SaiyanBlueEvo) {
             maxAlpha = 0.05F;
-            text1 = new ResourceLocation(auraDir + "aurag.png");
-            text3 = new ResourceLocation(auraDir + "auragb.png");
+            text1 = RLCache.get(auraDir + "aurag.png");
+            text3 = RLCache.get(auraDir + "auragb.png");
             color3 = 12310271;
         } else if (type3D == EnumAuraTypes3D.SaiyanRose) {
             maxAlpha = 0.05F;
-            text1 = new ResourceLocation(auraDir + "aurai.png");
-            text2 = new ResourceLocation(auraDir + "auraj.png");
+            text1 = RLCache.get(auraDir + "aurai.png");
+            text2 = RLCache.get(auraDir + "auraj.png");
             color2 = 7872713;
         } else if (type3D == EnumAuraTypes3D.SaiyanRoseEvo) {
             maxAlpha = 0.05F;
-            text1 = new ResourceLocation(auraDir + "aurai.png");
-            text2 = new ResourceLocation(auraDir + "auraj.png");
+            text1 = RLCache.get(auraDir + "aurai.png");
+            text2 = RLCache.get(auraDir + "auraj.png");
             color2 = 8592109;
         } else if (type3D == EnumAuraTypes3D.UI) {
             maxAlpha = 0.15F;
             color1 = 15790320;
-            text1 = new ResourceLocation(auraDir + "auras.png");
+            text1 = RLCache.get(auraDir + "auras.png");
             color3 = 4746495;
-            text3 = new ResourceLocation(auraDir + "auragb.png");
+            text3 = RLCache.get(auraDir + "auragb.png");
         } else if (type3D == EnumAuraTypes3D.GoD) {
             maxAlpha = 0.05F;
-            text1 = new ResourceLocation(auraDir + "aurag.png");
-            text3 = new ResourceLocation(auraDir + "auragb.png");
+            text1 = RLCache.get(auraDir + "aurag.png");
+            text3 = RLCache.get(auraDir + "auragb.png");
             color2 = 12464847;
         } else if (type3D == EnumAuraTypes3D.UltimateArco) {
             maxAlpha = 0.05F;
-            text1 = new ResourceLocation(auraDir + "aurau.png");
-            text2 = new ResourceLocation(auraDir + "aurau2.png");
+            text1 = RLCache.get(auraDir + "aurau.png");
+            text2 = RLCache.get(auraDir + "aurau2.png");
             color2 = 16776724;
         }
     }
@@ -470,7 +471,7 @@ public class EntityAura extends Entity {
     }
 
     public void setTexture(int type, String path) {
-        ResourceLocation loc = path == null ? null : new ResourceLocation(path);
+        ResourceLocation loc = path == null ? null : RLCache.get(path);
         switch (type) {
             case 2:
                 text2 = loc;

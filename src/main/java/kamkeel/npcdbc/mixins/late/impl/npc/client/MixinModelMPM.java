@@ -4,11 +4,11 @@ import kamkeel.npcdbc.client.ClientConstants;
 import kamkeel.npcdbc.client.model.ModelDBC;
 import kamkeel.npcdbc.client.render.OutlineRenderer;
 import kamkeel.npcdbc.client.render.RenderEventHandler;
-import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.data.npc.DBCDisplay;
 import kamkeel.npcdbc.data.outline.Outline;
 import kamkeel.npcdbc.mixins.late.IModelMPM;
 import kamkeel.npcdbc.mixins.late.INPCDisplay;
+import kamkeel.npcdbc.util.PlayerDataUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.entity.Entity;
@@ -90,7 +90,7 @@ public abstract class MixinModelMPM extends ModelNPCMale implements IModelMPM {
         ////////////////////////////////////////
         //Outline
         Outline outline = (Outline) display.getOutline();
-        if (outline != null && ConfigDBCClient.EnableOutlines) {
+        if (PlayerDataUtil.outlineVisible(entity, outline != null)) {
             startBlooming(ClientConstants.renderingGUI);
             glStencilFunc(GL_GREATER, entity.getEntityId() % 256, 0xFF);  // Test stencil value
             glStencilMask(0xff);

@@ -2,6 +2,7 @@ package kamkeel.npcdbc.client;
 
 import JinRyuu.JRMCore.client.config.jrmc.JGConfigClientSettings;
 import JinRyuu.JRMCore.entity.EntityCusPar;
+import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.enums.EnumAuraTypes2D;
 import kamkeel.npcdbc.data.IAuraData;
@@ -10,7 +11,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
 
+import java.util.Random;
+
 public class ParticleFormHandler {
+    private static final Random RAND = new Random();
+
     public static void spawnAura2D(DBCDisplay display) {
         if (display != null && display.auraEntity != null)
             spawnAura2D(display.auraEntity.type2D, display.auraEntity.color1, display.npc, display.auraEntity.auraData, display.npc.height, false);
@@ -20,6 +25,11 @@ public class ParticleFormHandler {
         if (!entity.worldObj.isRemote || data == null)
             return;
         if ((!JGConfigClientSettings.CLIENT_DA13 || !JGConfigClientSettings.CLIENT_DA8) && !isGUI)
+            return;
+        // Every particle is a real entity that ticks and moves. Skipping whole spawn rounds thins the cloud
+        // evenly, without flicker, since each particle lives for many ticks.
+        int density = ConfigDBCClient.AuraParticleDensity;
+        if (!isGUI && density < 100 && RAND.nextInt(100) >= density)
             return;
 
         float numberOfParticles = EnumAuraTypes2D.getParticleWidth(data);

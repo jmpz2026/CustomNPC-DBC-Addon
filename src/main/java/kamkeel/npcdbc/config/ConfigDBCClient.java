@@ -44,6 +44,14 @@ public class ConfigDBCClient {
     public static Property FirstPerson3DAuraOpacityProperty;
     public static int FirstPerson3DAuraOpacity = 100;
 
+    // Performance. The defaults keep the original look; DbrMod's light mode sets these fields in memory.
+    public static int ModelDetailMaxDistance = 0;
+    public static int AuraMaxDistance = 0;
+    public static int AuraParticleDensity = 100;
+    public static int OutlineMaxDistance = 0;
+    public static boolean BloomLowResolution = false;
+    public static int BloomMaxLevels = 0;
+
     public static Property AlternateSelectionWheelTextureProperty;
     public static boolean AlteranteSelectionWheelTexture = true;
 
@@ -94,6 +102,13 @@ public class ConfigDBCClient {
 
             FirstPerson3DAuraOpacityProperty = config.get(RENDERING, "First person 3D Aura Opacity", 100, "The opacity of the first person 3D Aura." + "\nModifying this makes it so auras on other players render normally without blinding you" + "\n(Min: 0, Max: 100)");
             FirstPerson3DAuraOpacity = Math.max(Math.min(100, FirstPerson3DAuraOpacityProperty.getInt(100)), 0);
+
+            ModelDetailMaxDistance = Math.max(0, config.get(RENDERING, "Model Detail Max Distance", 0, "NPC faces (eyes, nose, mouth, brows) are not drawn beyond this many blocks." + "\n0 = always drawn").getInt(0));
+            AuraMaxDistance = Math.max(0, config.get(RENDERING, "Aura Max Distance", 0, "Beyond this many blocks, addon auras are drawn with half the passes and a matching opacity." + "\n0 = full detail at any distance").getInt(0));
+            OutlineMaxDistance = Math.max(0, config.get(RENDERING, "Outline Max Distance", 0, "Outlines are not drawn beyond this many blocks." + "\n0 = always drawn").getInt(0));
+            BloomLowResolution = config.get(RENDERING, "Bloom Low Resolution", false, "Starts the bloom at quarter resolution instead of half. Much cheaper; the glow gets a bit softer.").getBoolean(false);
+            BloomMaxLevels = Math.max(0, config.get(RENDERING, "Bloom Max Levels", 0, "Caps the bloom mip levels. Fewer levels = cheaper and a shorter glow." + "\n0 = all levels").getInt(0));
+            AuraParticleDensity = Math.max(0, Math.min(100, config.get(RENDERING, "Aura Particle Density", 100, "Percentage of custom form aura particles that are spawned. Particles in GUIs are never cut." + "\n(Min: 0, Max: 100)").getInt(100)));
         } catch (Exception e) {
             ClientProxy.LOGGER.error("Error loading client configuration: " + e.getMessage());
         } finally {

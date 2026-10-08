@@ -11,6 +11,7 @@ import kamkeel.npcdbc.CustomNpcPlusDBC;
 import kamkeel.npcdbc.client.ClientConstants;
 import kamkeel.npcdbc.client.model.ModelAura;
 import kamkeel.npcdbc.client.sound.ClientSound;
+import kamkeel.npcdbc.client.utils.RenderLOD;
 import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.DBCRace;
@@ -44,6 +45,8 @@ public class AuraRenderer extends RenderDBC {
     private ModelAura model;
     private float[][] lightVertRotation;
     private int lightVertN;
+    /** Shared instead of a new Random per call and per inner-loop step: same randomness, no garbage per frame. */
+    private final Random rand = new Random();
 
 
     public AuraRenderer() {
@@ -84,7 +87,6 @@ public class AuraRenderer extends RenderDBC {
 
         int speed = aura.speed;
         int age = Math.max(1, aura.ticksExisted % speed);
-        Random rand = new Random();
 
 
         if (aura.type3D == EnumAuraTypes3D.None)
@@ -180,12 +182,21 @@ public class AuraRenderer extends RenderDBC {
         byte state = aura.auraData.getState();
 
         int maxLayers = 5;
+        // Far away, every other rotation is skipped. Two overlapping shells of opacity a cover like one of
+        // 1 - (1 - a)^2, so the remaining shells take that opacity and the aura keeps its density.
+        float step = 0.05f;
+        if (RenderLOD.beyond(aura.entity, ConfigDBCClient.AuraMaxDistance)) {
+            step = 0.1f;
+            if (alpha < 1)
+                alpha = 1 - (1 - alpha) * (1 - alpha);
+        }
+        // Nothing in the loops binds another texture, so one bind covers every layer.
+        this.renderManager.renderEngine.bindTexture(aura.text1);
         for (float i = 1; i < maxLayers + 1; ++i) {
             float layerPercent = i / maxLayers;
             float layerTemp = layerPercent * 20f;
 
-            for (float j = 1; j < 2; j += 0.05f) {
-                this.renderManager.renderEngine.bindTexture(aura.text1);
+            for (float j = 1; j < 2; j += step) {
 
                 model.auraModel.offsetY = -(i / maxLayers) * aura.height;
                 model.auraModel.offsetZ = layerTemp < 7F ? 0.2F - 1 * 0.075F : 0.35F + (1 - 7.0F) * 0.055F;
@@ -194,7 +205,7 @@ public class AuraRenderer extends RenderDBC {
                     model.auraModel.rotateAngleX = 100;
 
                 model.auraModel.rotationPointY = 55.0F + (i / maxLayers) * 20;
-                float r = new Random().nextInt(200);
+                float r = rand.nextInt(200);
                 if (layerTemp > 3) //aura intensity
                     model.auraModel.offsetY += -r * 0.0015f * intensity * getStateIntensity(state, race);
 
@@ -202,7 +213,6 @@ public class AuraRenderer extends RenderDBC {
                 glRotatef(360 * j, 0.0F, 1.0F, 0.0F);
                 if (layerPercent < 0.21) {
                     glColor4f(color, alpha);
-                    this.renderManager.renderEngine.bindTexture(aura.text1);
                     model.auraModel.render(0.0625f);
 
                 }
@@ -227,7 +237,6 @@ public class AuraRenderer extends RenderDBC {
         if (!JGConfigClientSettings.CLIENT_DA12)
             return;
 
-        Random rand = new Random();
 
         if (aura.ticksExisted % 100 > 0 && rand.nextLong() < 1)
             return;

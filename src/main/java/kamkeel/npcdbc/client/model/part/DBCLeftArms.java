@@ -1,5 +1,6 @@
 package kamkeel.npcdbc.client.model.part;
 
+import kamkeel.npcdbc.client.utils.RLCache;
 import kamkeel.npcdbc.client.ClientConstants;
 import kamkeel.npcdbc.client.model.ModelDBCPartInterface;
 import kamkeel.npcdbc.client.render.RenderEventHandler;
@@ -90,11 +91,11 @@ public class DBCLeftArms extends ModelDBCPartInterface {
             //////////////////////////////////////////////////////
             //////////////////////////////////////////////////////
 
-            location = new ResourceLocation("jinryuudragonbc:cc/arc/m/0B20.png");
+            location = RLCache.get("jinryuudragonbc:cc/arc/m/0B20.png");
             useColor = 0;
             super.render(par1);
 
-            location = new ResourceLocation("jinryuudragonbc:cc/arc/m/2B20.png");
+            location = RLCache.get("jinryuudragonbc:cc/arc/m/2B20.png");
             useColor = 2;
             super.render(par1);
 

@@ -159,14 +159,22 @@ public class PostProcessing {
         glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[0]);
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
-        glViewport(0, 0, width >> 1, height >> 1);
+        // Low resolution: the chain starts at the quarter-res mip and the half-res one stays cleared, so the
+        // upsample writes only the blurred lower levels into it. Skips the two most expensive blur passes.
+        int first = ConfigDBCClient.BloomLowResolution && bloomBuffers[1] > 0 ? 1 : 0;
+        if (first == 1)
+            glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[1]);
+        glViewport(0, 0, width >> (first + 1), height >> (first + 1));
         useShader(downsample13);
         renderQuad(MAIN_BLOOM_TEXTURE, 0, 0, width, height);
-        blurFilter(bloomTextures[0], 2.5f, 0, 0, width, height);
-        int downSamples = 0;
-        for (int i = 0; i < bloomBuffers.length; i++) {
+        blurFilter(bloomTextures[first], 2.5f, 0, 0, width, height);
+        int maxLevels = ConfigDBCClient.BloomMaxLevels;
+        int downSamples = first;
+        for (int i = first; i < bloomBuffers.length; i++) {
             // Stop at the last allocated mip: bloomBuffers[i + 1] == 0 would bind the default framebuffer
             if (i + 1 >= bloomBuffers.length || bloomBuffers[i] <= 0 || bloomBuffers[i + 1] <= 0)
+                break;
+            if (maxLevels > 0 && i + 1 >= maxLevels)
                 break;
             int mipWidth = width >> (i + 2), mipHeight = height >> (i + 2);
             glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[i + 1]);

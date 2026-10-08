@@ -1,5 +1,6 @@
 package kamkeel.npcdbc.client.model.part;
 
+import kamkeel.npcdbc.client.utils.RLCache;
 import JinRyuu.JRMCore.JRMCoreH;
 import kamkeel.npcdbc.client.ClientConstants;
 import kamkeel.npcdbc.client.model.ModelDBCPartInterface;
@@ -238,23 +239,23 @@ public class DBCHorns extends ModelDBCPartInterface {
                 super.render(par1);
             } else {
                 useColor = 0;
-                location = new ResourceLocation("jinryuudragonbc:cc/arc/m/0B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
+                location = RLCache.get("jinryuudragonbc:cc/arc/m/0B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
                 super.render(par1);
 
                 useColor = 1;
-                location = new ResourceLocation("jinryuudragonbc:cc/arc/m/1B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
+                location = RLCache.get("jinryuudragonbc:cc/arc/m/1B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
                 super.render(par1);
 
                 useColor = 2;
-                location = new ResourceLocation("jinryuudragonbc:cc/arc/m/2B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
+                location = RLCache.get("jinryuudragonbc:cc/arc/m/2B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
                 super.render(par1);
 
                 useColor = 3;
-                location = new ResourceLocation("jinryuudragonbc:cc/arc/m/3B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
+                location = RLCache.get("jinryuudragonbc:cc/arc/m/3B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
                 super.render(par1);
 
                 useColor = 0;
-                location = new ResourceLocation("jinryuudragonbc:cc/arc/m/4B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
+                location = RLCache.get("jinryuudragonbc:cc/arc/m/4B" + JRMCoreH.TransFrSkn2[state] + display.bodyType + ".png");
                 super.render(par1);
 
             }

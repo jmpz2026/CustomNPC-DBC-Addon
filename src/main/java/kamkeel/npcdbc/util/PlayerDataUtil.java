@@ -3,6 +3,8 @@ package kamkeel.npcdbc.util;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.npcdbc.client.OptifineHelper;
+import kamkeel.npcdbc.client.utils.RenderLOD;
+import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.controllers.AuraController;
 import kamkeel.npcdbc.controllers.FormController;
 import kamkeel.npcdbc.data.IAuraData;
@@ -140,6 +142,11 @@ public class PlayerDataUtil {
         return null;
     }
 
+    /** Whether an entity's outline gets drawn: outlines on, the entity has one, and it is within range. */
+    public static boolean outlineVisible(Entity entity, boolean hasOutline) {
+        return hasOutline && ConfigDBCClient.EnableOutlines && !RenderLOD.beyond(entity, ConfigDBCClient.OutlineMaxDistance);
+    }
+
     public static boolean useStencilBuffer(Entity entity) {
 
         IAuraData dat = PlayerDataUtil.getAuraData(entity);
@@ -154,13 +161,14 @@ public class PlayerDataUtil {
         if (entity instanceof EntityPlayer) {
             DBCData data = (DBCData) dat;
             auraOn = data.auraEntity != null;
-            outlineOn = data.getOutline() != null;
+            // Outlines that will not be drawn do not need the stencil setup.
+            outlineOn = outlineVisible(entity, data.getOutline() != null);
             particlesOn = !data.particleRenderQueue.isEmpty();
             use = auraOn || outlineOn || particlesOn;
         } else if (entity instanceof EntityNPCInterface) {
             DBCDisplay data = (DBCDisplay) dat;
             auraOn = data.auraEntity != null;
-            outlineOn = data.getOutline() != null;
+            outlineOn = outlineVisible(entity, data.getOutline() != null);
             particlesOn = !data.particleRenderQueue.isEmpty();
             use = auraOn || outlineOn || particlesOn || !data.dbcSecondaryAuraQueue.isEmpty() || !data.dbcAuraQueue.isEmpty();
         }

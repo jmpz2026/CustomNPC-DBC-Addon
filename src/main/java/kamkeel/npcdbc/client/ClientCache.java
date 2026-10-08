@@ -26,11 +26,31 @@ public class ClientCache {
 
     public static String discordURL = null;
 
+    /** How often {@link #getClientData} runs the expiry sweep of {@link CacheHashMap#get}. */
+    private static final long SWEEP_INTERVAL_MS = 1000;
+    private static long lastSweep;
+
+    /**
+     * Called many times per frame for every rendered player. {@link CacheHashMap#get} walks the whole map to
+     * expire old entries on every call, so the lookup goes through {@code getOrDefault} (HashMap's own lookup,
+     * not overridden) and the sweep runs at most once per {@link #SWEEP_INTERVAL_MS}. Entries still expire
+     * after {@code CacheLife} minutes, at most one interval late.
+     */
     public static DBCData getClientData(EntityPlayer player) {
+        String name = player.getCommandSenderName();
         synchronized (clientDataCache) {
-            if (!clientDataCache.containsKey(player.getCommandSenderName()))
-                clientDataCache.put(player.getCommandSenderName(), new CacheHashMap.CachedObject<>(new DBCData(player)));
-            return clientDataCache.get(player.getCommandSenderName()).getObject();
+            CacheHashMap.CachedObject<DBCData> cached = clientDataCache.getOrDefault(name, null);
+            if (cached == null) {
+                cached = new CacheHashMap.CachedObject<>(new DBCData(player));
+                clientDataCache.put(name, cached);
+            }
+            long now = System.currentTimeMillis();
+            if (now - lastSweep >= SWEEP_INTERVAL_MS) {
+                lastSweep = now;
+                return clientDataCache.get(name).getObject();
+            }
+            cached.updateTimeAccessed();
+            return cached.getObject();
         }
     }
 }

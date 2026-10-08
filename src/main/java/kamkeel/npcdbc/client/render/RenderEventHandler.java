@@ -1,5 +1,6 @@
 package kamkeel.npcdbc.client.render;
 
+import kamkeel.npcdbc.client.utils.RLCache;
 import JinRyuu.DragonBC.common.Npcs.EntityAura2;
 import JinRyuu.JBRA.ModelBipedDBC;
 import JinRyuu.JBRA.RenderPlayerJBRA;
@@ -12,7 +13,6 @@ import kamkeel.npcdbc.client.ClientProxy;
 import kamkeel.npcdbc.client.model.ModelPotara;
 import kamkeel.npcdbc.client.shader.PostProcessing;
 import kamkeel.npcdbc.client.shader.ShaderHelper;
-import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.data.IAuraData;
 import kamkeel.npcdbc.data.dbcdata.DBCData;
 import kamkeel.npcdbc.data.npc.DBCDisplay;
@@ -74,7 +74,7 @@ public class RenderEventHandler {
 
         int slot = event.slot + 3;
         float partialTick = event.partialRenderTick;
-        Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation(((ItemPotara) ModItems.Potaras).getArmorTextureByMeta(potaraFusionLevel)));
+        Minecraft.getMinecraft().getTextureManager().bindTexture(RLCache.get(((ItemPotara) ModItems.Potaras).getArmorTextureByMeta(potaraFusionLevel)));
         ModelBiped modelbiped = event.renderer.modelArmorChestplate;
         modelbiped.bipedHead.showModel = false;
         modelbiped.bipedHeadwear.showModel = false;
@@ -164,7 +164,7 @@ public class RenderEventHandler {
         ////////////////////////////////////////
         //Outline
         Outline outline = data.getOutline();
-        if (outline != null && ConfigDBCClient.EnableOutlines && !isItem) {
+        if (!isItem && PlayerDataUtil.outlineVisible(player, outline != null)) {
             startBlooming(ClientConstants.renderingGUI);
             glStencilFunc(GL_GREATER, player.getEntityId() % 256, 0xFF);  // Test stencil value
             glStencilMask(0xff);
