@@ -6,6 +6,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.npcdbc.CustomNpcPlusDBC;
 import kamkeel.npcdbc.client.gui.hud.formWheel.HUDFormWheel;
 import kamkeel.npcdbc.client.utils.Color;
+import kamkeel.npcdbc.compat.ExtraRaces;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.constants.DBCRace;
 import kamkeel.npcdbc.constants.enums.EnumAuraTypes2D;
@@ -172,6 +173,9 @@ public class FormIcon extends Gui {
                 break;
             case 5:
                 setMajinForms(DBCFormID);
+                break;
+            default:
+                setExtraRaceForms(DBCFormID);
                 break;
         }
     }
@@ -417,6 +421,23 @@ public class FormIcon extends Gui {
                 aura = AuraIconType.GOD;
                 auraColor = new Color(0xFFC125, 1);
                 break;
+        }
+    }
+
+    /**
+     * Extra races (DbrRazas, race 6 onwards). Without this the icon types stay
+     * null and draw() throws an NPE as soon as one of their forms is in the
+     * wheel. Their forms are humanoid; the God form gets the god aura.
+     */
+    private void setExtraRaceForms(int state) {
+        hairColor = new Color(0, 1);
+        auraColor = new Color(0xADD8E6, 1);
+        aura = AuraIconType.DEFAULT;
+        body = BodyIconType.HUMANOID;
+        hair = HairIconType.HUMANOID;
+        if (ExtraRaces.isGodForm(parent.dbcData.Race, state)) {
+            aura = AuraIconType.GOD;
+            auraColor = new Color(0xFFC125, 1);
         }
     }
 
