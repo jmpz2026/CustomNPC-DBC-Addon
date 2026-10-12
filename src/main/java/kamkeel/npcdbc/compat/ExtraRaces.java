@@ -51,6 +51,11 @@ public final class ExtraRaces {
         return DBCRace.isExtraRace(race) && form >= 1 && form < JRMCoreH.trans[race].length;
     }
 
+    /** God form of the race: internal name "God", the same convention as DBC's own tables. */
+    public static boolean isGodForm(int race, int form) {
+        return isForm(race, form) && "God".equals(JRMCoreH.trans[race][form]);
+    }
+
     /** Lang key of the form name (DbrRazas ships it and LangOverride localizes it). */
     public static String formLangKey(int race, int form) {
         return JRMCoreH.tjrmc + "." + JRMCoreH.TransNms[race][form];
