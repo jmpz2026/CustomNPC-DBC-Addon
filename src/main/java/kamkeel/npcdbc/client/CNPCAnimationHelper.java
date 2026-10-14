@@ -54,6 +54,10 @@ public class CNPCAnimationHelper {
     private static final HashSet<Object> parentParts = new HashSet<>();
     private static final HashSet<Object> childParts = new HashSet<>();
     private static final HashSet<Object> processedModels = new HashSet<>();
+    // Field name of each ModelRenderer, found once: the reflection ran for every piece of an animated player on each frame
+    private static final Map<ModelRenderer, String> rendererNames = new WeakHashMap<>();
+    private static Field giTurtleCape;
+    private static boolean giTurtleCapeResolved;
 
     public static void setOriginalValues(ModelBase mainModel) {
         if(mainModel == null)
@@ -240,9 +244,8 @@ public class CNPCAnimationHelper {
         if (model instanceof GiTurtleMdl) {
             GiTurtleMdl giTurtleMdl = (GiTurtleMdl) model;
             try {
-                Field field = GiTurtleMdl.class.getDeclaredField("cape");
-                field.setAccessible(true);
-                if (renderer == field.get(giTurtleMdl)) {
+                Field field = giTurtleCape();
+                if (field != null && renderer == field.get(giTurtleMdl)) {
                     return EnumAnimationPart.BODY;
                 }
             } catch (Exception ignored) {
@@ -271,7 +274,30 @@ public class CNPCAnimationHelper {
         return null;
     }
 
+    private static Field giTurtleCape() {
+        if (!giTurtleCapeResolved) {
+            giTurtleCapeResolved = true;
+            try {
+                giTurtleCape = GiTurtleMdl.class.getDeclaredField("cape");
+                giTurtleCape.setAccessible(true);
+            } catch (Exception ignored) {
+                giTurtleCape = null;
+            }
+        }
+        return giTurtleCape;
+    }
+
     private static String getModelRendererName(ModelRenderer renderer) {
+        String name = rendererNames.get(renderer);
+        if (name == null) {
+            name = renderer.baseModel == null ? null : findModelRendererName(renderer);
+            // An empty name marks a piece that is not a field of its model
+            rendererNames.put(renderer, name == null ? "" : name);
+        }
+        return name == null || name.isEmpty() ? null : name;
+    }
+
+    private static String findModelRendererName(ModelRenderer renderer) {
         Class<?> RenderClass = renderer.baseModel.getClass();
         Object model = renderer.baseModel;
 
