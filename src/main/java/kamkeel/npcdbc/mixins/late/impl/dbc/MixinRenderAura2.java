@@ -1,5 +1,6 @@
 package kamkeel.npcdbc.mixins.late.impl.dbc;
 
+import kamkeel.npcdbc.client.render.LightmapState;
 import JinRyuu.DragonBC.common.Npcs.EntityAura2;
 import JinRyuu.DragonBC.common.Npcs.RenderAura2;
 import JinRyuu.JRMCore.JRMCoreHDBC;
@@ -247,10 +248,18 @@ public class MixinRenderAura2 implements IRenderEntityAura2 {
     }
 
 
+    /** Lightmap state before func_tad turned it off (see LightmapState). Auras do not nest. */
+    @Unique
+    private static boolean npcdbc$lightmapBefore = true;
+
+    @Inject(method = "func_tad", at = @At("HEAD"))
+    private void saveLight(EntityAura2 par1Entity, double parX, double parY, double parZ, float par8, float par9, CallbackInfo ci) {
+        npcdbc$lightmapBefore = LightmapState.isOn();
+    }
+
     @Inject(method = "func_tad", at = @At("TAIL"))
     private void enableLight(EntityAura2 par1Entity, double parX, double parY, double parZ, float par8, float par9, CallbackInfo ci) {
-        Minecraft.getMinecraft().entityRenderer.enableLightmap(0);
-
+        LightmapState.restore(npcdbc$lightmapBefore);
     }
 
     @Inject(method = "func_tad(LJinRyuu/DragonBC/common/Npcs/EntityAura2;DDDFF)V", at = @At(value = "INVOKE", target = "LJinRyuu/DragonBC/common/Npcs/EntityAura2;getState2()F", ordinal = 0, shift = At.Shift.BEFORE))
