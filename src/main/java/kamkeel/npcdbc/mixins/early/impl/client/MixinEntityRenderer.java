@@ -3,6 +3,7 @@ package kamkeel.npcdbc.mixins.early.impl.client;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import kamkeel.npcdbc.client.ClientConstants;
+import kamkeel.npcdbc.client.render.LightmapState;
 import kamkeel.npcdbc.client.shader.PostProcessing;
 import kamkeel.npcdbc.scripted.DBCPlayerEvent;
 import net.minecraft.client.Minecraft;
@@ -44,7 +45,10 @@ public class MixinEntityRenderer {
         mc.mcProfiler.endStartSection("NPCDBCEntities");
         ForgeHooksClient.setRenderPass(ClientConstants.MiddleRenderPass);
         glDepthMask(true);
+        // Runs after EntityRenderer turned the lightmap off; leave it as it was (see LightmapState).
+        boolean lightmap = LightmapState.isOn();
         this.mc.renderGlobal.renderEntities(this.mc.renderViewEntity, frustrum.get(), partialTick);
+        LightmapState.restore(lightmap);
         ForgeHooksClient.setRenderPass(-1);
     }
 

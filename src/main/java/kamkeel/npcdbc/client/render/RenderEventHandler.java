@@ -96,6 +96,7 @@ public class RenderEventHandler {
             glEnable(GL_STENCIL_TEST);
             glClear(GL_STENCIL_BUFFER_BIT); //TODO: needs to be put somewhere else i.e RenderWorldLastEvent, but for some reason doesn't work when put there
             enableStencilWriting(e.entity.getEntityId() % 256);
+            lightmapBefore.put(e.entity.getEntityId(), LightmapState.isOn());
             Minecraft.getMinecraft().entityRenderer.disableLightmap(0);
         }
     }
@@ -129,6 +130,7 @@ public class RenderEventHandler {
                 glEnable(GL_STENCIL_TEST);
                 glClear(GL_STENCIL_BUFFER_BIT); //TODO: needs to be put somewhere else i.e RenderWorldLastEvent, but for some reason doesn't work when put there
                 enableStencilWriting(e.entity.getEntityId() % 256);
+                lightmapBefore.put(e.entity.getEntityId(), LightmapState.isOn());
                 Minecraft.getMinecraft().entityRenderer.disableLightmap(0);
                 glDepthMask(true); //fixes a native MC RP1 entity bug in which the depth test is disabled
 
@@ -157,6 +159,7 @@ public class RenderEventHandler {
         if (!data.useStencilBuffer)
             return;
 
+        saveLightmap(player);
         Minecraft.getMinecraft().entityRenderer.disableLightmap(0);
         EntityAura aura = data.auraEntity;
 
@@ -229,7 +232,7 @@ public class RenderEventHandler {
         postStencilRendering();
         if (ClientConstants.renderingGUI)
             PostProcessing.bloom(1.5f, true);
-        Minecraft.getMinecraft().entityRenderer.enableLightmap(0);
+        restoreLightmap(player);
     }
 
     @SubscribeEvent
@@ -247,6 +250,7 @@ public class RenderEventHandler {
         float partialTicks = Minecraft.getMinecraft().timer.renderPartialTicks;
 
         disableStencilWriting(entity.getEntityId() % 256, false);
+        saveLightmap(entity);
         mc.entityRenderer.disableLightmap(0);
 
         boolean renderAura = aura != null, renderParticles = !display.particleRenderQueue.isEmpty();
@@ -342,7 +346,7 @@ public class RenderEventHandler {
         enableStencilWriting(e.entity.getEntityId() % 256);
         if (ClientConstants.renderingGUI)
             PostProcessing.bloom(1.5f, true);
-        Minecraft.getMinecraft().entityRenderer.enableLightmap(0);
+        restoreLightmap(entity);
         // postStencilRendering();//LETS YOU DRAW TO THE COLOR BUFFER AGAIN
         glClear(GL_STENCIL_BUFFER_BIT); //TODO: needs to be put somewhere else i.e RenderWorldLastEvent, but for some reason doesn't work when put there
         glDisable(GL_STENCIL_TEST);
@@ -361,6 +365,26 @@ public class RenderEventHandler {
     @SubscribeEvent
     public void renderHandItem(DBCPlayerEvent.RenderArmEvent.Item e) {
         renderPlayer(e.entityPlayer, e.renderer, e.partialRenderTick, false, true);
+    }
+
+    /**
+     * Lightmap state before the Pre of each stencil entity turned it off, by entity id. The Post
+     * (renderPlayer / renderNPC) puts back that state instead of always turning it on: see
+     * {@link LightmapState}. The Pre always records; the Post only records when no Pre did (the
+     * held-item event has none), because by then the Pre already turned it off.
+     */
+    private static final java.util.Map<Integer, Boolean> lightmapBefore = new java.util.HashMap<>();
+
+    private static void saveLightmap(net.minecraft.entity.Entity entity) {
+        Integer id = entity.getEntityId();
+        if (!lightmapBefore.containsKey(id))
+            lightmapBefore.put(id, LightmapState.isOn());
+    }
+
+    /** Without a saved state (a Post with no Pre), the old behaviour: on. */
+    private static void restoreLightmap(net.minecraft.entity.Entity entity) {
+        Boolean on = lightmapBefore.remove(entity.getEntityId());
+        LightmapState.restore(on == null || on);
     }
 
     public static void enableStencilWriting(int id) {
