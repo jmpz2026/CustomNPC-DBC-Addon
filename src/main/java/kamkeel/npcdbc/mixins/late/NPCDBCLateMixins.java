@@ -52,6 +52,7 @@ public class NPCDBCLateMixins implements ILateMixinLoader {
             mixins.add("dbc.recolor.MixinJRMCoreGuiButtons");
             mixins.add("dbc.recolor.MixinJRMCoreGuiScreenColor");
             mixins.add("dbc.client.MixinDBCTalkGui");
+            mixins.add("dbc.client.MixinDBCTalkGuiMente");
             mixins.add("dbc.MixinJRMCoreGui");
             mixins.add("dbc.MixinEntityAura2");
             mixins.add("dbc.MixinEntityAuraRing");
@@ -72,6 +73,10 @@ public class NPCDBCLateMixins implements ILateMixinLoader {
         mixins.add("dbc.MixinJRMCoreComTickH");
         mixins.add("dbc.MixinJRMCoreEH");
         mixins.add("dbc.MixinJRMCoreH");
+        // DBR: Mind is retired
+        mixins.add("dbc.MixinJRMCoreHMente");
+        mixins.add("dbc.MixinComJrmcaBonus");
+        mixins.add("npc.MixinScriptDBCPlayerMente");
         mixins.add("dbc.MixinJRMCoreHDBC");
         mixins.add("dbc.MixinJGConfigUltraInstinct");
         mixins.add("dbc.MixinJRMCorePacHanC");

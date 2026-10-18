@@ -402,3 +402,22 @@ effect.kiregeneration=Regeneración de ki
 effect.staminaregeneration=Regeneración de stamina
 effect.zenkai=Zenkai
 stats.ki=Ki
+
+# DBR: la Mente se retiro y reglas de WIL y DEX
+npcdbc.mente.retirada=La Mente ya no se puede subir.
+npcdbc.mente.bonus=La Mente ya no admite bonus: se ignoro.
+statsheet.dbr.flying=§8Velocidad de vuelo: %s. Sube con la habilidad %s.
+statsheet.dbr.balance=Equilibrio
+statsheet.dbr.balance.desc=§2Equilibrio§8: §4+%d%%§8 de daño a todo tu §2golpe físico§8 si tu §9WIL§8 está entre el §4%d%%§8 y el §4%d%%§8 de tu §9STR§8.\n§8Fuera de ese rango el bono baja poco a poco.\n§8Ahora tu WIL es el §4%d%%§8 de tu STR.
+statsheet.dbr.mitigation=Mitig. DEX
+statsheet.dbr.mitigation.desc=§9DEX§8 te quita el §4%d%%§8 del daño de cada golpe que recibes, si el golpe es como el tuyo.\n§8Golpes más fuertes: quita menos. Máximo: §4%d%%§8.
+statsheet.dbr.melee.wil=§9WIL§8 suma §4%s§8 a tu golpe (cada punto vale el §4%d%%§8 de un punto de §9STR§8).
+statsheet.dbr.melee.balance=§2Equilibrio§8: §4+%d%%§8 a todo el golpe.
+statsheet.dbr.defense.mitigation=§9DEX§8 quita el §4%d%%§8 del daño de un golpe como el tuyo (máximo §4%d%%§8).
+statsheet.dbr.defense.block=§2Bloquear§8 gasta §4%d%%§8 menos §2estamina§8.
+statsheet.dbr.wil.hit=§9WIL§8 suma §4%s§8 a tu §2golpe físico§8.
+statsheet.dbr.wil.drain=§2Kaioken§8 te quita §4%d%%§8 menos §2vida§8.\n§2Transformaciones§8: gastan §4%d%%§8 menos §2ki§8 (máximo §4%d%%§8).
+statsheet.dbr.attr.str=§9STR§8: más daño en cada §2golpe físico§8.
+statsheet.dbr.attr.dex=§9DEX§8 te defiende:\n§8- Recibes hasta §4%d%%§8 menos §2daño§8 por golpe.\n§8- En §2PvP§8, aturdir y agarrar te dura hasta §4%d%%§8 menos.\n§8- §2Bloquear§8 gasta hasta §4%d%%§8 menos §2estamina§8.
+statsheet.dbr.attr.wil=§9WIL§8 sube tu daño:\n§8- Más daño de §2ki§8.\n§8- Cada punto suma al §2golpe físico§8 el §4%d%%§8 de un punto de §9STR§8.\n§8- §2Equilibrio§8: §4+%d%%§8 de daño si tu WIL es entre el §4%d%%§8 y el §4%d%%§8 de tu STR.\n§8- §2Kaioken§8 quita menos §2vida§8 y las §2transformaciones§8 gastan menos §2ki§8: hasta §4%d%%§8 menos, al máximo con WIL igual a STR.
+statsheet.dbr.attr.wil.now=§8Ahora: Equilibrio §4+%d%%§8, drenaje §4-%d%%§8.

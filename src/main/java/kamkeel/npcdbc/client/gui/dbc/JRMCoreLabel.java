@@ -5,6 +5,7 @@ import kamkeel.npcdbc.config.ConfigDBCClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
@@ -148,13 +149,21 @@ public class JRMCoreLabel extends Gui implements HoverableLabel {
                 tooltipHeight = toolTipSplit.size() * 10;
             }
 
+            // DBR: keep the tooltip on screen (long ones went past the bottom at small resolutions)
+            ScaledResolution res = new ScaledResolution(client, client.displayWidth, client.displayHeight);
+            int boxW = tooltipWidth + 10, boxH = tooltipHeight + 10;
             int tooltipY = mouseY + 10;
+            if (tooltipY + boxH > res.getScaledHeight())
+                tooltipY = Math.max(0, res.getScaledHeight() - boxH);
+            int tooltipX = mouseX;
+            if (tooltipX + boxW > res.getScaledWidth())
+                tooltipX = Math.max(0, res.getScaledWidth() - boxW);
 
-            this.drawTexturedModalRect(mouseX, tooltipY, 0, 0, tooltipWidth + 10, tooltipHeight + 10);
+            this.drawTexturedModalRect(tooltipX, tooltipY, 0, 0, boxW, boxH);
 
             int linesWritten = 0;
             for (String text : toolTipSplit) {
-                client.fontRenderer.drawString(text, mouseX + 5, tooltipY + 5 + linesWritten * 10, 0);
+                client.fontRenderer.drawString(text, tooltipX + 5, tooltipY + 5 + linesWritten * 10, 0);
                 linesWritten++;
             }
         }
