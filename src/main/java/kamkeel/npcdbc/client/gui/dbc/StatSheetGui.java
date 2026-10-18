@@ -20,6 +20,7 @@ import kamkeel.npcdbc.data.dbcdata.DBCData;
 import kamkeel.npcdbc.data.form.Form;
 import kamkeel.npcdbc.mixins.late.IDBCGuiScreen;
 import kamkeel.npcdbc.util.PlayerDataUtil;
+import kamkeel.npcdbc.util.Mente;
 import kamkeel.npcdbc.util.Utility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
@@ -59,6 +60,10 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
     private GuiButton UPDATE_VANITY_BUTTON;
 
     private Form currentForm;
+
+    // DBR attribute rules, filled in updateScreen for the tooltips
+    private int dbrWilHit, dbrMelee;
+    private double dbrBalance, dbrMitigation;
 
     public StatSheetGui() {
         super(10);
@@ -101,6 +106,59 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
     }
 
     /**
+     * Y of a row of the right column. Step 9 and not 10: with charging, Balance, DEX mitigation
+     * and the rows other mods add (DbrRazas regeneration) a step of 10 leaves the panel.
+     */
+    public int filaDerecha(int index) {
+        return guiHeightOffset + 12 + index * 9;
+    }
+
+    /** DBR lines: the .lang keeps line breaks as a literal \n. */
+    private static String dbrTr(String key) {
+        return LocalizationHelper.getLocalizedString(key).replace("\\n", "\n");
+    }
+
+    private String getDbrMeleeDescription() {
+        // Colors live in the .lang: the code passes plain numbers
+        String s = "\n" + String.format(dbrTr("statsheet.dbr.melee.wil"), numSep(dbrWilHit),
+            Math.round(StatsDbrClient.wilGolpe * 100));
+        if (dbrBalance > 0)
+            s += "\n" + String.format(dbrTr("statsheet.dbr.melee.balance"), Math.round(dbrBalance * 100));
+        return s;
+    }
+
+    private String getDbrDefenseDescription(int defense) {
+        int hit = Math.max(1, dbrMelee);
+        dbrMitigation = StatsDbrClient.mitigacion(defense, hit);
+        return "\n" + String.format(dbrTr("statsheet.dbr.defense.mitigation"), Math.round(dbrMitigation * 100),
+            Math.round(StatsDbrClient.dexMitMax * 100))
+            + "\n" + String.format(dbrTr("statsheet.dbr.defense.block"), Math.round(StatsDbrClient.bloqueo(defense, hit) * 100));
+    }
+
+    private String getDbrWilDescription(int wil, int str) {
+        long drain = Math.round(StatsDbrClient.drenaje(wil, str) * 100);
+        return "\n" + String.format(dbrTr("statsheet.dbr.wil.hit"), numSep(dbrWilHit))
+            + "\n" + String.format(dbrTr("statsheet.dbr.wil.drain"), drain, drain, Math.round(StatsDbrClient.drenajeMax * 100));
+    }
+
+    /** What each attribute does on DBR, under its own description. */
+    private String getDbrAttributeDescription(int i, int wil, int str) {
+        if (i == DBCAttribute.Strength)
+            return "\n" + dbrTr("statsheet.dbr.attr.str");
+        if (i == DBCAttribute.Dexterity)
+            return "\n" + String.format(dbrTr("statsheet.dbr.attr.dex"),
+                Math.round(StatsDbrClient.dexMitMax * 100), Math.round(StatsDbrClient.controlMax * 100), Math.round(StatsDbrClient.bloqueoMax * 100));
+        if (i == 3)
+            return "\n" + String.format(dbrTr("statsheet.dbr.attr.wil"),
+                Math.round(StatsDbrClient.wilGolpe * 100), Math.round(StatsDbrClient.equiBono * 100),
+                Math.round(StatsDbrClient.equiMin * 100), Math.round(StatsDbrClient.equiMax * 100),
+                Math.round(StatsDbrClient.drenajeMax * 100))
+                + "\n" + String.format(dbrTr("statsheet.dbr.attr.wil.now"),
+                Math.round(StatsDbrClient.equilibrio(wil, str) * 100), Math.round(StatsDbrClient.drenaje(wil, str) * 100));
+        return "";
+    }
+
+    /**
      * Tooltip of the release line while DBR's poder total is active.
      */
     private String getPoderTotalDescription(int release, int total) {
@@ -121,7 +179,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             return;
         }
 
-        if ((!ConfigDBCClient.EnhancedGui && ConfigDBCClient.EnableDebugStatSheetSwitching) || dbcClient.Accept == 0 || dbcClient.Powertype != 1) {
+        if (dbcClient.Accept == 0 || dbcClient.Powertype != 1) {
             JRMCoreGuiScreen DBCScreen = new JRMCoreGuiScreen(0);
             ((IDBCGuiScreen) DBCScreen).setGuiIDPostInit(10);
             FMLCommonHandler.instance().showGuiScreen(DBCScreen);
@@ -297,6 +355,11 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
         for (int i = 0; i < 6; i++) {
             boolean isMaxed = !(kqGW3Z(isFused) > PlyrAttrbts[i]);
 
+            if (i == Mente.INDICE) {
+                upgradeButtons[i].enabled = false;
+                statVals[i] = PlyrAttrbts[i];
+                continue;
+            }
             upgradeButtons[i].enabled = !isFused && !isMaxed && canAffordUpgrade;
 
             String upgradeTooltip = null;
@@ -375,6 +438,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             }
 
             attributeDesc += getAttributeBonusDescription(i);
+            attributeDesc += getDbrAttributeDescription(i, PlyrAttrbts[3], PlyrAttrbts[0]);
 
             String modifiedColor = isModified ? "§6" : "";
             modifiedColor = isSTRDEXWIL ? formStatColor : modifiedColor;
@@ -416,7 +480,13 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
         int SPI = stat(JRMCoreClient.mc.thePlayer, 5, 1, 5, statVals[5], dbcClient.Race, dbcClient.Class, SklLvl_KiBs(PlyrSkills, 1));
         int stat = stat(mc.thePlayer, 0, 1, 0, statVals[0], dbcClient.Race, dbcClient.Class, 0);
         float incrementVal = statInc(1, 0, 1, Race, JRMCoreH.Class, 0.0F);
-        int curAtr = (int) ((double) stat * 0.01D * (double) curRelease * (double) weightPerc(0));
+        // DBR: WIL adds to every physical hit and Balance raises the whole hit
+        int wilHit = StatsDbrClient.wilAlGolpe(statVals[3], 1, dbcClient.Race, dbcClient.Class);
+        double balance = StatsDbrClient.equilibrio(statVals[3], statVals[0]);
+        this.dbrWilHit = (int) (wilHit * 0.01D * curRelease * weightPerc(0));
+        this.dbrBalance = balance;
+        int curAtr = (int) ((double) (stat + wilHit) * (1D + balance) * 0.01D * (double) curRelease * (double) weightPerc(0));
+        this.dbrMelee = curAtr;
         int bonusOutput = 0;
         if (!PlyrSettingsB(9))
             bonusOutput = (int) ((double) SklLvl(12) * 0.0025D * SPI * (double) curRelease * 0.01D * DBCConfig.cnfKFd);
@@ -436,7 +506,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
                     (bonusOutput > 0 ? numSep(bonusOutput) : null),
                     0,
                     (int) (100.0F - weightPerc(0) * 100.0F)
-                ) + getFormAdvancedStat(DBCStatistics.Melee)
+                ) + getDbrMeleeDescription() + getFormAdvancedStat(DBCStatistics.Melee)
             );
 
         stat = stat(mc.thePlayer, 1, 1, 1, statVals[1], dbcClient.Race, dbcClient.Class, 0);
@@ -470,7 +540,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             (bonusOutput > 0 ? numSep(bonusOutput) : null),
             0,
             (int) (100.0F - weightPerc(1) * 100.0F)
-        ) +  getFormAdvancedStat(DBCStatistics.Defense);
+        ) + getDbrDefenseDescription((int) (longValue - bonusOutput)) + getFormAdvancedStat(DBCStatistics.Defense);
         dynamicLabels.get("defense")
             .updateDisplay(formStatColor + numSep(longValue))
             .setTooltip(defDesc);
@@ -545,7 +615,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
                     null,
                     0,
                     0
-                ) + getFormAdvancedStat(DBCStatistics.EnergyPower)
+                ) + getDbrWilDescription(PlyrAttrbts[3], PlyrAttrbts[0]) + getFormAdvancedStat(DBCStatistics.EnergyPower)
             );
 
 
@@ -590,7 +660,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
         stat = (int) (spdFrm(PlyrAttrbts[4], SklLvl(3, (byte) 1), 100.0F, true, false, formID, State2, incrementVal) * 100.0F * speedScaling);
 
 
-        statDesc = String.format(trl("jrmc", "FSDBDesc"), "§2" + stat + "§8", "§c" + attrNms(1, 4) + "§8", "§9" + trl("dbc", "Fly") + "§8");
+        statDesc = String.format(dbrTr("statsheet.dbr.flying"), "§2" + stat + "§8", "§9" + trl("dbc", "Fly") + "§8");
         if (speedReduction > 0)
             statDesc += "\n" + trl("jrmc", "weightreduction") + ": §c" + speedReduction + "% §7";
 
@@ -598,6 +668,16 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
         dynamicLabels.get("flying")
             .updateDisplay(stat)
             .setTooltip(statDesc);
+
+        dynamicLabels.get("dbrBalance")
+            .updateDisplay(formStatColor + "+" + Math.round(dbrBalance * 100) + "%")
+            .setTooltip(String.format(dbrTr("statsheet.dbr.balance.desc"),
+                Math.round(StatsDbrClient.equiBono * 100), Math.round(StatsDbrClient.equiMin * 100), Math.round(StatsDbrClient.equiMax * 100),
+                statVals[0] > 0 ? Math.round(100D * statVals[3] / statVals[0]) : 0L));
+        dynamicLabels.get("dbrMitigation")
+            .updateDisplay(formStatColor + Math.round(dbrMitigation * 100) + "%")
+            .setTooltip(String.format(dbrTr("statsheet.dbr.mitigation.desc"),
+                Math.round(dbrMitigation * 100), Math.round(StatsDbrClient.dexMitMax * 100)));
 
     }
 
@@ -614,18 +694,9 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
     public void initGui() {
         super.initGui();
 
-        if (ConfigDBCClient.EnableDebugStatSheetSwitching && !ConfigDBCClient.EnhancedGui) {
-            return;
-        }
         addServerButtons();
 
-        //Button to adjust GUI
-
-        if (ConfigDBCClient.EnableDebugStatSheetSwitching) {
-            String s = (!ConfigDBCClient.EnhancedGui ? "Old" : "§aModern") + " GUI";
-            int button1Width = this.fontRendererObj.getStringWidth(s) + 10;
-            this.buttonList.add(new JRMCoreGuiButtons00(303030303, guiWidthOffset + 260, height / 2 - 10, button1Width + 8, 20, s, 0));
-        }
+        // DBR: no old/modern toggle, the old sheet still shows the retired Mind attribute
 
         //Difficulty button
         GuiInfo.ReferenceIDs ref = GuiInfo.ReferenceIDs.DIFFICULTY;
@@ -724,12 +795,19 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
         };
 
         for (int i = 0; i < 6; i++) {
-            int yPos = guiHeightOffset + i * 10 + index * 10 + 6;
+            // DBR: Mind is retired, its row is not drawn and the rest move up
+            int row = i < Mente.INDICE ? i : i - 1;
+            int yPos = guiHeightOffset + row * 10 + index * 10 + 6;
 
             GuiButton button = new JRMCoreGuiButtonsA3(i, guiWidthOffset + 5, yPos + 3, 10, 2, false);
+            upgradeButtons[i] = button;
+            if (i == Mente.INDICE) {
+                button.visible = false;
+                button.enabled = false;
+                continue;
+            }
 
             dynamicLabels.put("attr_" + i + "_button_desc", new JRMCoreLabel(button, "%s", null));
-            upgradeButtons[i] = button;
             dynamicLabels.put("attr_" + i, new JRMCoreLabel(
                 (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + LocalizationHelper.getLocalizedString("statsheet.attribute." + statNames[i]) + ": §4%s",
                 "%s",
@@ -739,7 +817,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
 
 
         }
-        index += 6;
+        index += 5;
         GuiButton amountButton = new JRMCoreGuiButtonsA3(6, guiWidthOffset + 5, guiHeightOffset + index * 10 + 12, 10, 2, false);
         upgradeButtons[6] = amountButton;
         this.buttonList.addAll(Arrays.asList(upgradeButtons));
@@ -764,7 +842,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             null,
             null,
             guiWidthOffset + 133,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
         ).setDisplay(trl("jrmc", "Stats")));
         index++;
 
@@ -773,7 +851,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + trl("jrmc", "mleDB") + ": §4%s",
             trl("jrmc", "StatIncreaseDesc") + trl("jrmc", "StatIncreaseDesc2"),
             guiWidthOffset + 133,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
         ));
         index++;
 
@@ -781,7 +859,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + trl("jrmc", "DefDB") + ": §4%s",
             "%s",
             guiWidthOffset + 133,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
         ));
         index++;
 
@@ -789,7 +867,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + trl("jrmc", "Passive") + ": §4%s",
             "%s",
             guiWidthOffset + 138,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
         ));
         index++;
 
@@ -798,7 +876,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
                 (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + LocalizationHelper.getLocalizedString("statsheet.stat.charging") + ": §4%s",
                 "%s",
                 guiWidthOffset + 138,
-                guiHeightOffset + index * 10 + 11
+                filaDerecha(index)
             ));
             index++;
         }
@@ -807,7 +885,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + trl("jrmc", "BdDB") + ": §4%s",
             "%s",
             guiWidthOffset + 133,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
         ));
         index++;
 
@@ -815,7 +893,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + trl("jrmc", "StDB") + ": §4%s",
             "%s",
             guiWidthOffset + 133,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
         ));
         index++;
 
@@ -823,7 +901,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + trl("jrmc", "EnPwDB") + ": §4%s",
             "%s",
             guiWidthOffset + 133,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
         ));
         index++;
 
@@ -831,21 +909,35 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + trl("jrmc", "EnPlDB") + ": §4%s",
             "%s",
             guiWidthOffset + 133,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
         ));
         index++;
         this.dynamicLabels.put("running", new JRMCoreLabel(
             (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + trl("jrmc", "SpDB") + ": §4%s%%",
             "%s",
             guiWidthOffset + 133,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
         ));
         index++;
         this.dynamicLabels.put("flying", new JRMCoreLabel(
             (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + trl("jrmc", "FSDB") + ": §4%s%%",
             "%s",
             guiWidthOffset + 133,
-            guiHeightOffset + index * 10 + 11
+            filaDerecha(index)
+        ));
+        index++;
+        this.dynamicLabels.put("dbrBalance", new JRMCoreLabel(
+            (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + dbrTr("statsheet.dbr.balance") + ": §4%s",
+            "%s",
+            guiWidthOffset + 133,
+            filaDerecha(index)
+        ));
+        index++;
+        this.dynamicLabels.put("dbrMitigation", new JRMCoreLabel(
+            (ConfigDBCClient.DarkMode ? DARKMODE_ACCENT : "") + dbrTr("statsheet.dbr.mitigation") + ": §4%s",
+            "%s",
+            guiWidthOffset + 133,
+            filaDerecha(index)
         ));
         index++;
 

@@ -473,3 +473,22 @@ effect.staminaregeneration=Stamina Regeneration
 effect.zenkai=Zenkai
 
 stats.ki=Ki
+
+# DBR: Mind is retired, WIL and DEX rules
+npcdbc.mente.retirada=Mind can no longer be raised.
+npcdbc.mente.bonus=Mind no longer takes bonuses: ignored.
+statsheet.dbr.flying=§8Flying speed: %s. Raised by the %s skill.
+statsheet.dbr.balance=Balance
+statsheet.dbr.balance.desc=§2Balance§8: §4+%d%%§8 damage on your whole §2physical hit§8 when your §9WIL§8 is between §4%d%%§8 and §4%d%%§8 of your §9STR§8.\n§8Outside that range the bonus fades slowly.\n§8Your WIL is now §4%d%%§8 of your STR.
+statsheet.dbr.mitigation=DEX mitig.
+statsheet.dbr.mitigation.desc=§9DEX§8 removes §4%d%%§8 of the damage of each hit you take, for a hit like yours.\n§8Stronger hits: it removes less. Cap: §4%d%%§8.
+statsheet.dbr.melee.wil=§9WIL§8 adds §4%s§8 to your hit (each point is worth §4%d%%§8 of a §9STR§8 point).
+statsheet.dbr.melee.balance=§2Balance§8: §4+%d%%§8 on the whole hit.
+statsheet.dbr.defense.mitigation=§9DEX§8 removes §4%d%%§8 of the damage of a hit like yours (cap §4%d%%§8).
+statsheet.dbr.defense.block=§2Blocking§8 costs §4%d%%§8 less §2stamina§8.
+statsheet.dbr.wil.hit=§9WIL§8 adds §4%s§8 to your §2physical hit§8.
+statsheet.dbr.wil.drain=§2Kaioken§8 takes §4%d%%§8 less §2health§8.\n§2Transformations§8 use §4%d%%§8 less §2ki§8 (cap §4%d%%§8).
+statsheet.dbr.attr.str=§9STR§8: more damage on each §2physical hit§8.
+statsheet.dbr.attr.dex=§9DEX§8 protects you:\n§8- You take up to §4%d%%§8 less §2damage§8 per hit.\n§8- In §2PvP§8, stuns and grabs last up to §4%d%%§8 less.\n§8- §2Blocking§8 costs up to §4%d%%§8 less §2stamina§8.
+statsheet.dbr.attr.wil=§9WIL§8 raises your damage:\n§8- More §2ki§8 damage.\n§8- Each point adds §4%d%%§8 of a §9STR§8 point to the §2physical hit§8.\n§8- §2Balance§8: §4+%d%%§8 damage when your WIL is between §4%d%%§8 and §4%d%%§8 of your STR.\n§8- §2Kaioken§8 takes less §2health§8 and §2transformations§8 use less §2ki§8: up to §4%d%%§8 less, the most with WIL equal to STR.
+statsheet.dbr.attr.wil.now=§8Now: Balance §4+%d%%§8, drain §4-%d%%§8.

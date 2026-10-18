@@ -398,3 +398,22 @@ effect.kiregeneration=Regeneração de Ki
 effect.staminaregeneration=Regeneração de Stamina
 effect.zenkai=Zenkai
 stats.ki=Ki
+
+# DBR: a Mente foi retirada, regras de WIL e DEX
+npcdbc.mente.retirada=A Mente nao pode mais ser aumentada.
+npcdbc.mente.bonus=A Mente nao aceita mais bonus: ignorado.
+statsheet.dbr.flying=§8Velocidade de voo: %s. Aumenta com a habilidade %s.
+statsheet.dbr.balance=Equilibrio
+statsheet.dbr.balance.desc=§2Equilibrio§8: §4+%d%%§8 de dano em todo o seu §2golpe físico§8 se a sua §9WIL§8 estiver entre §4%d%%§8 e §4%d%%§8 da sua §9STR§8.\n§8Fora dessa faixa o bônus cai aos poucos.\n§8Agora sua WIL é §4%d%%§8 da sua STR.
+statsheet.dbr.mitigation=Mitig. DEX
+statsheet.dbr.mitigation.desc=§9DEX§8 tira §4%d%%§8 do dano de cada golpe que você recebe, num golpe igual ao seu.\n§8Golpes mais fortes: tira menos. Máximo: §4%d%%§8.
+statsheet.dbr.melee.wil=§9WIL§8 soma §4%s§8 ao seu golpe (cada ponto vale §4%d%%§8 de um ponto de §9STR§8).
+statsheet.dbr.melee.balance=§2Equilibrio§8: §4+%d%%§8 em todo o golpe.
+statsheet.dbr.defense.mitigation=§9DEX§8 tira §4%d%%§8 do dano de um golpe igual ao seu (máximo §4%d%%§8).
+statsheet.dbr.defense.block=§2Bloquear§8 gasta §4%d%%§8 menos §2estamina§8.
+statsheet.dbr.wil.hit=§9WIL§8 soma §4%s§8 ao seu §2golpe físico§8.
+statsheet.dbr.wil.drain=§2Kaioken§8 tira §4%d%%§8 menos §2vida§8.\n§2Transformações§8 gastam §4%d%%§8 menos §2ki§8 (máximo §4%d%%§8).
+statsheet.dbr.attr.str=§9STR§8: mais dano em cada §2golpe físico§8.
+statsheet.dbr.attr.dex=§9DEX§8 te protege:\n§8- Você recebe até §4%d%%§8 menos §2dano§8 por golpe.\n§8- No §2PvP§8, atordoar e agarrar duram até §4%d%%§8 menos.\n§8- §2Bloquear§8 gasta até §4%d%%§8 menos §2estamina§8.
+statsheet.dbr.attr.wil=§9WIL§8 aumenta seu dano:\n§8- Mais dano de §2ki§8.\n§8- Cada ponto soma ao §2golpe físico§8 §4%d%%§8 de um ponto de §9STR§8.\n§8- §2Equilibrio§8: §4+%d%%§8 de dano se sua WIL estiver entre §4%d%%§8 e §4%d%%§8 da sua STR.\n§8- §2Kaioken§8 tira menos §2vida§8 e as §2transformações§8 gastam menos §2ki§8: até §4%d%%§8 menos, o máximo com WIL igual à STR.
+statsheet.dbr.attr.wil.now=§8Agora: Equilibrio §4+%d%%§8, drenagem §4-%d%%§8.

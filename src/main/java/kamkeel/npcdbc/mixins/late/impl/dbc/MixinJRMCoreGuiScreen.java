@@ -5,6 +5,7 @@ import cpw.mods.fml.common.FMLCommonHandler;
 import kamkeel.npcdbc.CustomNpcPlusDBC;
 import kamkeel.npcdbc.client.ColorMode;
 import kamkeel.npcdbc.client.gui.dbc.StatSheetGui;
+import kamkeel.npcdbc.util.Mente;
 import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.constants.DBCForm;
 import kamkeel.npcdbc.data.PlayerDBCInfo;
@@ -68,13 +69,18 @@ public class MixinJRMCoreGuiScreen extends GuiScreen implements IDBCGuiScreen {
 
     @Inject(method = "updateScreen", at = @At("HEAD"), remap = true)
     private void onUpdateScreen(CallbackInfo ci) {
-        if (this.guiID == 10 && (ConfigDBCClient.EnhancedGui || !ConfigDBCClient.EnableDebugStatSheetSwitching) && DBCData.getClient().Powertype == 1)
+        // DBR: always the npcdbc sheet (the old one still shows the retired Mind attribute)
+        if (this.guiID == 10 && DBCData.getClient().Powertype == 1)
             FMLCommonHandler.instance().showGuiScreen(new StatSheetGui());
     }
 
     @Inject(method = "drawDetails", at = @At("HEAD"), remap = false, cancellable = true)
     private static void onDrawDetails(String s1, String s2, int xpos, int ypos, int x, int y, FontRenderer var8, CallbackInfo ci) {
 
+        if (s1 != null && Mente.filtrar(s1).isEmpty()) {
+            ci.cancel();
+            return;
+        }
         if (PlayerDataUtil.getClientDBCInfo() == null) {
             return;
         }
