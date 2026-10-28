@@ -17,6 +17,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.nio.FloatBuffer;
+
 import static org.lwjgl.opengl.GL11.*;
 
 @Mixin(value = EntityRenderer.class)
@@ -36,8 +38,15 @@ public class MixinEntityRenderer {
 
     @Inject(method = "renderWorld", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/EntityRenderer;debugViewDirection:I", ordinal = 0, shift = At.Shift.BEFORE))
     private void captureDefaultMatrices(float partialTick, long idk, CallbackInfo info, @Local(name = "frustrum") LocalRef<Frustrum> frustrum) {
-        glGetFloat(GL_MODELVIEW_MATRIX, PostProcessing.DEFAULT_MODELVIEW);
-        glGetFloat(GL_PROJECTION_MATRIX, PostProcessing.DEFAULT_PROJECTION);
+        // Nothing between ActiveRenderInfo.updateRenderInfo and here changes the camera matrices
+        // (sky, clouds and terrain push and pop), so copy what it read instead of a GL readback.
+        copy(AccessorActiveRenderInfo.npcdbc$getModelview(), PostProcessing.DEFAULT_MODELVIEW);
+        copy(AccessorActiveRenderInfo.npcdbc$getProjection(), PostProcessing.DEFAULT_PROJECTION);
+    }
+
+    private static void copy(FloatBuffer src, FloatBuffer dst) {
+        for (int i = 0; i < 16; i++)
+            dst.put(i, src.get(i));
     }
 
     @Inject(method = "renderWorld", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderHelper;enableStandardItemLighting()V", ordinal = 1, shift = At.Shift.AFTER))
