@@ -51,6 +51,17 @@ public class PostProcessing {
     public static int[] auraTextures = new int[3];
 
     public static boolean processBloom;
+
+    /**
+     * Bloom cost, set from outside (DbrOptimizer, by reflection, from its effects quality): 0 = full,
+     * 1 = light (the blur chain starts at a quarter of the screen instead of half), 2 = off. Only
+     * ever lowers what the config allows; 0 keeps the original behaviour.
+     */
+    public static volatile int bloomLevel = 0;
+
+    public static boolean bloomAllowed() {
+        return bloomSupported && ConfigDBCClient.EnableBloom && bloomLevel < 2 && ShaderHelper.shadersEnabled();
+    }
     public static boolean bloomSupported = true; // ← new flag
 
     public static boolean wheelBlurAvailable() {
@@ -81,7 +92,7 @@ public class PostProcessing {
     private static boolean isScissorEnabled;
 
     public static void startBlooming(boolean clearBloomBuffer) {
-        if (!bloomSupported || !ConfigDBCClient.EnableBloom || !ShaderHelper.shadersEnabled())
+        if (!bloomAllowed())
             return;
 
         int currentBuffer = glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
@@ -180,27 +191,28 @@ public class PostProcessing {
         GL11.glEnable(GL11.GL_COLOR_MATERIAL);
         mc.entityRenderer.disableLightmap(0);
 
+        // Light bloom starts the chain one mip lower: the blur passes, the most expensive part
+        // after the geometry, run on a quarter of the pixels. BloomLowResolution (optimized branch)
+        // asks for the same: either one is enough.
+        int base = Math.max(chainBase(bloomLevel, bloomBuffers),
+            chainBase(ConfigDBCClient.BloomLowResolution ? 1 : 0, bloomBuffers));
+
         // Down Sampling in a mip chain
-        glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[0]);
+        glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[base]);
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
-        // Low resolution: the chain starts at the quarter-res mip and the half-res one stays cleared, so the
-        // upsample writes only the blurred lower levels into it. Skips the two most expensive blur passes.
-        int first = ConfigDBCClient.BloomLowResolution && bloomBuffers[1] > 0 ? 1 : 0;
-        if (first == 1)
-            glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[1]);
-        glViewport(0, 0, width >> (first + 1), height >> (first + 1));
+        glViewport(0, 0, width >> (base + 1), height >> (base + 1));
         useShader(downsample13);
         renderQuad(MAIN_BLOOM_TEXTURE, 0, 0, width, height);
         // Separable blur ping-pongs through the second attachment instead of reading the texture it writes.
         drawToBuffers(2);
-        blurVertical(bloomTextures[first], 2.5f, 0, 0, width, height);
+        blurVertical(bloomTextures[base], 2.5f, 0, 0, width, height);
         resetDrawBuffer();
-        blurHorizontal(bloomTextures2[first], 2.5f, 0, 0, width, height);
+        blurHorizontal(bloomTextures2[base], 2.5f, 0, 0, width, height);
         releaseShader();
         int maxLevels = ConfigDBCClient.BloomMaxLevels;
-        int downSamples = first;
-        for (int i = first; i < bloomBuffers.length; i++) {
+        int downSamples = base;
+        for (int i = base; i < bloomBuffers.length; i++) {
             // Stop at the last allocated mip: bloomBuffers[i + 1] == 0 would bind the default framebuffer
             if (i + 1 >= bloomBuffers.length || bloomBuffers[i] <= 0 || bloomBuffers[i + 1] <= 0)
                 break;
@@ -215,7 +227,7 @@ public class PostProcessing {
         }
 
         // Up sampling the mip chain
-        for (int i = downSamples; i > 0; i--) {
+        for (int i = downSamples; i > base; i--) {
             int lower = bloomTextures[i];
             int mipWidth = width >> (i), mipHeight = height >> (i);
             glBindFramebuffer(GL_FRAMEBUFFER, bloomBuffers[i - 1]);
@@ -237,7 +249,7 @@ public class PostProcessing {
         glViewport(0, 0, width, height);
         int sceneTexture = copyScene(width, height);
         useShader(additiveCombine, () -> {
-            uniformTexture("bloomTexture", 2, bloomTextures[0]);
+            uniformTexture("bloomTexture", 2, bloomTextures[base]);
             uniform1f("exposure", lightExposure);
         });
         renderQuad(sceneTexture, 0, 0, width, height);
@@ -453,6 +465,11 @@ public class PostProcessing {
                 org.lwjgl.opengl.EXTFramebufferObject.GL_STENCIL_ATTACHMENT_EXT,
                 OpenGlHelper.field_153199_f, MAIN.depthBuffer);
         }
+    }
+
+    /** First mip of the chain: 1 for light bloom when that mip and the next exist, else 0. */
+    static int chainBase(int level, int[] buffers) {
+        return level == 1 && buffers.length > 2 && buffers[1] > 0 && buffers[2] > 0 ? 1 : 0;
     }
 
     public static void init(int width, int height) {

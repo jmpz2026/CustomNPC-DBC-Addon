@@ -3,8 +3,6 @@ package kamkeel.npcdbc.api.client;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.npcdbc.client.shader.PostProcessing;
-import kamkeel.npcdbc.client.shader.ShaderHelper;
-import kamkeel.npcdbc.config.ConfigDBCClient;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -35,8 +33,7 @@ public final class BloomApi {
 
     /** Whether bloom would be applied right now (config, shader support, buffers ready). */
     public static boolean isAvailable() {
-        return PostProcessing.bloomSupported && PostProcessing.hasInitialized
-                && ConfigDBCClient.EnableBloom && ShaderHelper.shadersEnabled();
+        return PostProcessing.hasInitialized && PostProcessing.bloomAllowed();
     }
 
     /**

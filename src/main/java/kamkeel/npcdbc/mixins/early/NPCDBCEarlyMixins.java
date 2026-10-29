@@ -62,6 +62,7 @@ public class NPCDBCEarlyMixins implements IMixinConfigPlugin {
                 mixins.add("client.optifine.MixinShaders");
             } else {
                 mixins.add("client.MixinEntityRenderer");
+                mixins.add("client.AccessorActiveRenderInfo");
             }
 
 
