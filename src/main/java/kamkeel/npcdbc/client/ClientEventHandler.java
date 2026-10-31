@@ -311,7 +311,23 @@ public class ClientEventHandler {
         }
     }
 
+    /** RenderAura2 appends ".png" itself. */
+    private static String dbcTexture(String path) {
+        return path.endsWith(".png") ? path.substring(0, path.length() - 4) : path;
+    }
+
+    @SubscribeEvent
+    public void apiAuras(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END)
+            kamkeel.npcdbc.api.client.AuraApi.tick();
+    }
+
     public static EntityAura2 spawnAura(Entity entity, Aura aura) {
+        return spawnAura(entity, aura, true);
+    }
+
+    /** {@code playSound} false: AuraApi auras, whose owner has no toggled aura to keep the loop alive. */
+    public static EntityAura2 spawnAura(Entity entity, Aura aura, boolean playSound) {
 
         boolean isPlayer = entity instanceof EntityPlayer;
         boolean isNPC = entity instanceof EntityNPCInterface;
@@ -502,6 +518,22 @@ public class ClientEventHandler {
         if (aura.display.hasSpeed())
             aur.setSpd(aura.display.speed);
 
+        // Own art: a full resource path ("modid:textures/..."), with or without ".png".
+        // RenderAura2 keeps it whole when it carries its own domain (MixinRenderAura2).
+        if (!aura.display.texture1.isEmpty())
+            aur.setTex(dbcTexture(aura.display.texture1));
+        if (!aura.display.texture2.isEmpty()) {
+            aur.setTexL2(dbcTexture(aura.display.texture2));
+            if (!aura.display.hasColor("color2"))
+                aur.setColL2(formColor);
+        }
+        if (!aura.display.texture3.isEmpty()) {
+            aur.setTexL3(dbcTexture(aura.display.texture3));
+            if (aur.getColL3() <= 0)
+                aur.setColL3(formColor);
+        }
+        ((IEntityAura) aur).setBloom(aura.display.bloom);
+
         //Kettle Mode stuff
         if (aura.display.kettleModeEnabled) {
             if (aura.display.kettleModeCharging && !SubGuiAuraDisplay.useGUIAura)
@@ -515,7 +547,8 @@ public class ClientEventHandler {
         // This block indefinitely loops through aura sound as long as aura is enabled
         // regardless of the sound.ogg duration. The second the sound ends, it insta-replays
 
-        AuraSound.play(entity, aura, data);
+        if (playSound)
+            AuraSound.play(entity, aura, data);
 
         ////////////////////////////////////////////////////
         ////////////////////////////////////////////////////

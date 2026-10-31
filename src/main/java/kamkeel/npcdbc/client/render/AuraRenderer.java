@@ -8,6 +8,7 @@ import JinRyuu.JRMCore.client.config.jrmc.JGConfigClientSettings;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.npcdbc.CustomNpcPlusDBC;
+import kamkeel.npcdbc.api.client.BloomApi;
 import kamkeel.npcdbc.client.ClientConstants;
 import kamkeel.npcdbc.client.model.ModelAura;
 import kamkeel.npcdbc.client.sound.ClientSound;
@@ -96,7 +97,12 @@ public class AuraRenderer extends RenderDBC {
         boolean isFirstPerson = DBCClient.mc.thePlayer == aura.entity && DBCClient.mc.gameSettings.thirdPersonView == 0;
         alpha = (isFirstPerson ? aura.isKaioken ? 0.015f : 0.0125f : alpha) * alphaConfig * (isFirstPerson ? (float) ConfigDBCClient.FirstPerson3DAuraOpacity / 100 : 1.0f);
         // alpha = 1f;
-        aura.setTexture(1, CustomNpcPlusDBC.ID + ":textures/aura/auraalpha.png");
+        // Own art from the aura's texture1 ("modid:textures/..."); the kaioken child keeps the default.
+        String own = aura.isKaioken || aura.aura == null ? "" : aura.aura.display.texture1;
+        aura.setTexture(1, own.isEmpty() ? CustomNpcPlusDBC.ID + ":textures/aura/auraalpha.png" : own.endsWith(".png") ? own : own + ".png");
+        // The revamp aura has a single texture: blooming it would light the whole aura (see
+        // MixinRenderAura2, where only layer 2 blooms). Bloom stays for the DBC path.
+        boolean bloom = false;
 
         pulseMax = 4;
         if (pulseMax > 0)
@@ -172,6 +178,8 @@ public class AuraRenderer extends RenderDBC {
         glDisable(GL_BLEND);
         glAlphaFunc(GL_GREATER, 0.5f);
         glEnable(GL_LIGHTING);
+        if (bloom)
+            BloomApi.end();
 
     }
 

@@ -86,5 +86,23 @@ public interface IEntityAura {
 
     @Unique
     boolean isGUIAura();
+
+    /** Draw this aura into the bloom buffer as well. */
+    @Unique
+    void setBloom(boolean bloom);
+
+    @Unique
+    boolean isBloom();
+
+    /**
+     * Aura started by {@link kamkeel.npcdbc.api.client.AuraApi}: its size comes from this power
+     * instead of the owner's DBC data, and it is drawn even for the local player's name in first
+     * person (cinematic actors share that name). Negative = a normal aura.
+     */
+    @Unique
+    void setApiPower(float power);
+
+    @Unique
+    float getApiPower();
 }
 
