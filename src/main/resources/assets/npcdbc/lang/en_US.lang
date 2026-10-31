@@ -361,15 +361,18 @@ dbc.se.fatigue=Fatigue
 ############################
 
 npcdbc.noFormSelected=No Form Selected
-npcdbc.cooldown=You need to cooldown
-npcdbc.noTail=Transformation requires a grown tail
-npcdbc.nextUnlocked=You do not have the next transformation unlocked
-npcdbc.spectator=You cannot transform as a spectator
-npcdbc.raceIneligible=Your race is ineligible for this form
-npcdbc.healthRequirement=You need to be below %d percent health to access the %dselected form
-npcdbc.pain=Cannot transform while in pain
-npcdbc.wrongDBC=You are in the wrong DBC Form
-npcdbc.transformFromParent=Must transfrom from Parent
+npcdbc.cooldown=You just transformed. Wait a few seconds and try again.
+npcdbc.noTail=%1$s needs a tail. Wait for it to grow back.
+npcdbc.nextUnlocked=You don't have %1$s, the next form, yet. Unlock it to keep going up.
+npcdbc.spectator=You are a fusion spectator and can't transform. Wait for the fusion to end.
+npcdbc.raceIneligible=%1$s is only for %2$s. Switch to a character of that race.
+npcdbc.healthRequirement=%1$s only activates below %2$s%% health. Take some damage and try again.
+npcdbc.pain=You are in pain and can't transform. Wait for it to pass.
+npcdbc.wrongDBC=To use %1$s, transform into %2$s first.
+npcdbc.transformFromParent=To use %1$s, transform into %2$s first.
+npcdbc.msg.dbcStateN=your race's form %s
+npcdbc.msg.allSaiyans=Saiyans
+npcdbc.msg.allRaces=every race
 npcdbc.fusionSkillFusion=does not have fusion skill enabled
 npcdbc.holdPotara=Both players must hold a Potara Earring
 npcdbc.noFuse=cannot fuse with NoFuse in effect

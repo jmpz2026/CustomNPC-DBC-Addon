@@ -159,19 +159,19 @@ public class ClientEventHandler {
                     //       Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.noFormSelected"));
                     if (formData.isInCustomForm()) {
                         if (TransformController.rage > 0 && TransformController.transformed) {
-                            Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.cooldown"));
+                            TransformMessages.send("npcdbc.cooldown");
                             return;
                         }
 
                         if (form != null && form.hasChild()) {
                             form = (Form) form.getChild();
                             if (!formData.hasFormUnlocked(form.getID())) {
-                                Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.nextUnlocked"));
+                                TransformMessages.send("npcdbc.nextUnlocked", TransformMessages.form(form));
                                 return;
                             }
 
                             if ((form.display.hairType.equals("ssj4") || form.display.hairType.equals("oozaru")) && DBCRace.isSaiyan(dbcData.Race) && !dbcData.hasTail()) {
-                                Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.noTail"));
+                                TransformMessages.send("npcdbc.noTail", TransformMessages.form(form));
                                 return;
                             }
                         }
@@ -180,43 +180,45 @@ public class ClientEventHandler {
                         if (form != null) {
 
                             if (!form.raceEligible(dbcData.Race)) {
-                                Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.raceIneligible"));
+                                TransformMessages.send("npcdbc.raceIneligible", TransformMessages.form(form), TransformMessages.race(form.getRace()));
                                 return;
                             }
 
                             boolean allowBypass = form.mastery.canInstantTransform(formData.getFormLevel(form.id)) && ClientCache.allowTransformBypass;
                             if (form.requiredForm.containsKey((int) dbcData.Race)) {
                                 if (!allowBypass && form.requiredForm.get((int) dbcData.Race) != dbcData.State) {
-                                    Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.wrongDBC"));
+                                    TransformMessages.send("npcdbc.wrongDBC", TransformMessages.form(form),
+                                            TransformMessages.dbcState(dbcData.Race, form.requiredForm.get((int) dbcData.Race)));
                                     return;
                                 }
                             } else {
                                 // Must be in Parent Form to Transform
                                 if (form.parentID != -1 && form.isFromParentOnly() && !allowBypass) {
                                     if (form.parentID != formData.currentForm) {
-                                        Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.transformFromParent"));
+                                        TransformMessages.send("npcdbc.transformFromParent", TransformMessages.form(form),
+                                                TransformMessages.form((Form) form.getParent()));
                                         return;
                                     }
                                 }
                             }
                             if ((form.display.hairType.equals("ssj4") || form.display.hairType.equals("oozaru")) && DBCRace.isSaiyan(dbcData.Race) && !dbcData.hasTail()) {
-                                Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.noTail"));
+                                TransformMessages.send("npcdbc.noTail", TransformMessages.form(form));
                                 return;
                             }
 
                             if (dbcData.stats.isFusionSpectator()) {
-                                Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.spectator"));
+                                TransformMessages.send("npcdbc.spectator");
                                 return;
                             }
                             float healthReq = (form.mastery.healthRequirement >= 100f || form.mastery.healthRequirement <= 0f) ? 150 : form.mastery.healthRequirement * form.mastery.calculateMulti("healthRequirement", formData.getFormLevel(form.id));
 
                             if (dbcData.stats.getCurrentBodyPercentage() > healthReq) {
-                                Utility.sendMessage(mc.thePlayer, "§c" + StatCollector.translateToLocalFormatted("npcdbc.healthRequirement", healthReq, "§c"));
+                                TransformMessages.send("npcdbc.healthRequirement", TransformMessages.form(form), String.valueOf(Math.round(healthReq)));
                                 return;
                             }
 
                             if (form.mastery.hasHeat() && DBCData.getClient().Pain > 0) {
-                                Utility.sendMessage(mc.thePlayer, translate("§c", "npcdbc.pain"));
+                                TransformMessages.send("npcdbc.pain");
                                 return;
                             }
                         }
