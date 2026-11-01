@@ -36,6 +36,8 @@ public class AuraDisplay implements IAuraDisplay {
 
     public int outlineID = -1;
     public boolean outlineAlwaysOn;
+    /** Draw the aura into the bloom buffer too (needs bloom on in the client config). */
+    public boolean bloom;
 
     public AuraDisplay(Aura parent) {
         this.parent = parent;
@@ -90,6 +92,7 @@ public class AuraDisplay implements IAuraDisplay {
 
         outlineID = rendering.hasKey("outlineID") ? rendering.getInteger("outlineID") : -1;
         outlineAlwaysOn = rendering.getBoolean("outlineAlwaysOn");
+        bloom = rendering.getBoolean("bloom");
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound compound) {
@@ -131,6 +134,7 @@ public class AuraDisplay implements IAuraDisplay {
 
         rendering.setInteger("outlineID", outlineID);
         rendering.setBoolean("outlineAlwaysOn", outlineAlwaysOn);
+        rendering.setBoolean("bloom", bloom);
 
         compound.setTag("rendering", rendering);
         return compound;

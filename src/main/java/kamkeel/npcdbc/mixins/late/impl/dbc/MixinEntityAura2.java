@@ -64,6 +64,10 @@ public abstract class MixinEntityAura2 extends Entity implements IEntityAura {
     private boolean isGUIAura;
     @Unique
     private Entity entity;
+    @Unique
+    private boolean bloom;
+    @Unique
+    private float apiPower = -1;
 
     @Shadow
     private String mot;
@@ -165,6 +169,30 @@ public abstract class MixinEntityAura2 extends Entity implements IEntityAura {
 
         return JGConfigClientSettings.CLIENT_GR0;
 
+    }
+
+    @Unique
+    @Override
+    public void setBloom(boolean bloom) {
+        this.bloom = bloom;
+    }
+
+    @Unique
+    @Override
+    public boolean isBloom() {
+        return bloom;
+    }
+
+    @Unique
+    @Override
+    public void setApiPower(float power) {
+        this.apiPower = power;
+    }
+
+    @Unique
+    @Override
+    public float getApiPower() {
+        return apiPower;
     }
 
     @Unique
