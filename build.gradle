@@ -8,6 +8,6 @@ group= "kamkeel.npcdbc"
 
 tasks.runServer { setWorkingDir(file("run/server")) }
 
-version = "1.1.7"
+version = "5.3.0"
 group= "kamkeel.npcdbc"
 archivesBaseName = "npcdbc"
