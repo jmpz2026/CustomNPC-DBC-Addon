@@ -4,7 +4,7 @@ varying vec2 texcoord;
 varying vec3 vertPos;
 
 uniform sampler2D bgl_RenderedTexture;
-uniform int time; // Passed in, see ShaderHelper.java
+uniform float time; // Passed in, see ShaderHelper.java
 
 uniform float grainIntensity; // Passed in via Callback
 

@@ -1,6 +1,6 @@
 #version 120
 
-uniform int time; // Passed in, see ShaderHelper.java
+uniform float time; // Passed in, see ShaderHelper.java
 
 uniform float heightMatch; // Passed in via Callback
 uniform sampler2D image;

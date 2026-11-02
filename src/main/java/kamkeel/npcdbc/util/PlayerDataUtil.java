@@ -62,6 +62,8 @@ public class PlayerDataUtil {
     }
 
     public static PlayerDBCInfo getDBCInfo(PlayerData playerData) {
+        if (playerData == null)
+            return null;
         return ((IPlayerDBCInfo) playerData).getPlayerDBCInfo();
     }
 

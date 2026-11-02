@@ -1,7 +1,7 @@
 #version 120
 
 uniform sampler2D bgl_RenderedTexture;
-uniform int time; // Passed in, see ShaderHelper.java
+uniform float time; // Passed in, see ShaderHelper.java
 
 void main() {
     vec2 texcoord = vec2(gl_TexCoord[0]);

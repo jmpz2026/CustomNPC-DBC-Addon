@@ -315,10 +315,13 @@ public class    DBCData extends DBCDataUniversal implements IAuraData {
         NBTTagCompound dbc = this.player.getEntityData().getCompoundTag(DBCPersisted);
 
         // Save the DBC Addon tags to PlayerPersisted before loading it to fields
+        // Null for players CNPC+ does not track, like the one bspkrs draws in the main menu.
         PlayerDBCInfo formData = PlayerDataUtil.getDBCInfo(player);
-        dbc.setInteger("addonFormID", formData.currentForm);
-        dbc.setInteger("auraID", formData.currentAura);
-        dbc.setFloat("addonFormLevel", formData.getCurrentLevel());
+        if (formData != null) {
+            dbc.setInteger("addonFormID", formData.currentForm);
+            dbc.setInteger("auraID", formData.currentAura);
+            dbc.setFloat("addonFormLevel", formData.getCurrentLevel());
+        }
         loadFromNBT(dbc);
         if (syncALL)
             syncTracking();

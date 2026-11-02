@@ -53,9 +53,9 @@ public class RenderEventHandler {
 
     @SubscribeEvent
     public void renderPotaraWhenFused(RenderPlayerEvent.SetArmorModel event) {
-        if (event.slot != 3 || event.stack != null)
+        // No world: a menu preview (bspkrs) with a fake player that can never be fused.
+        if (event.slot != 3 || event.stack != null || mc.theWorld == null)
             return;
-
 
         DBCData dbcData = DBCData.get(event.entityPlayer);
 
@@ -93,8 +93,7 @@ public class RenderEventHandler {
     @SubscribeEvent
     public void enableHandStencil(DBCPlayerEvent.RenderArmEvent.Pre e) {
         if (mc.theWorld != null && PlayerDataUtil.useStencilBuffer(e.entity)) {
-            glEnable(GL_STENCIL_TEST);
-            glClear(GL_STENCIL_BUFFER_BIT); //TODO: needs to be put somewhere else i.e RenderWorldLastEvent, but for some reason doesn't work when put there
+            beginStencil();
             enableStencilWriting(e.entity.getEntityId() % 256);
             lightmapBefore.put(e.entity.getEntityId(), LightmapState.isOn());
             Minecraft.getMinecraft().entityRenderer.disableLightmap(0);
@@ -127,8 +126,7 @@ public class RenderEventHandler {
             }
 
             if (PlayerDataUtil.useStencilBuffer(e.entity)) {
-                glEnable(GL_STENCIL_TEST);
-                glClear(GL_STENCIL_BUFFER_BIT); //TODO: needs to be put somewhere else i.e RenderWorldLastEvent, but for some reason doesn't work when put there
+                beginStencil();
                 enableStencilWriting(e.entity.getEntityId() % 256);
                 lightmapBefore.put(e.entity.getEntityId(), LightmapState.isOn());
                 Minecraft.getMinecraft().entityRenderer.disableLightmap(0);
@@ -169,10 +167,13 @@ public class RenderEventHandler {
         Outline outline = data.getOutline();
         if (!isItem && PlayerDataUtil.outlineVisible(player, outline != null)) {
             startBlooming(ClientConstants.renderingGUI);
-            glStencilFunc(GL_GREATER, player.getEntityId() % 256, 0xFF);  // Test stencil value
-            glStencilMask(0xff);
-            OutlineRenderer.renderOutline(render, outline, player, partialTicks, isArm);
-            endBlooming();
+            try {
+                glStencilFunc(GL_GREATER, player.getEntityId() % 256, 0xFF);  // Test stencil value
+                glStencilMask(0xff);
+                OutlineRenderer.renderOutline(render, outline, player, partialTicks, isArm);
+            } finally {
+                endBlooming();
+            }
         }
 
         boolean renderAura = aura != null && aura.shouldRender(), renderParticles = !data.particleRenderQueue.isEmpty();
@@ -348,7 +349,8 @@ public class RenderEventHandler {
             PostProcessing.bloom(1.5f, true);
         restoreLightmap(entity);
         // postStencilRendering();//LETS YOU DRAW TO THE COLOR BUFFER AGAIN
-        glClear(GL_STENCIL_BUFFER_BIT); //TODO: needs to be put somewhere else i.e RenderWorldLastEvent, but for some reason doesn't work when put there
+        if (PostProcessing.stencilAvailable)
+            glClear(GL_STENCIL_BUFFER_BIT); //TODO: needs to be put somewhere else i.e RenderWorldLastEvent, but for some reason doesn't work when put there
         glDisable(GL_STENCIL_TEST);
     }
 
@@ -385,6 +387,18 @@ public class RenderEventHandler {
     private static void restoreLightmap(net.minecraft.entity.Entity entity) {
         Boolean on = lightmapBefore.remove(entity.getEntityId());
         LightmapState.restore(on == null || on);
+    }
+
+    /**
+     * Turns the stencil test on for one entity. Without a stencil buffer (old Intel drivers, where
+     * DbrOptimizer does not ask for one) the test stays off: the glStencil* calls after it are then
+     * plain state with no effect, and auras draw without the body mask instead of breaking the frame.
+     */
+    public static void beginStencil() {
+        if (!PostProcessing.stencilAvailable)
+            return;
+        glEnable(GL_STENCIL_TEST);
+        glClear(GL_STENCIL_BUFFER_BIT); //TODO: needs to be put somewhere else i.e RenderWorldLastEvent, but for some reason doesn't work when put there
     }
 
     public static void enableStencilWriting(int id) {

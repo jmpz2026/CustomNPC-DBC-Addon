@@ -92,10 +92,13 @@ public abstract class MixinModelMPM extends ModelNPCMale implements IModelMPM {
         Outline outline = (Outline) display.getOutline();
         if (PlayerDataUtil.outlineVisible(entity, outline != null)) {
             startBlooming(ClientConstants.renderingGUI);
-            glStencilFunc(GL_GREATER, entity.getEntityId() % 256, 0xFF);  // Test stencil value
-            glStencilMask(0xff);
-            OutlineRenderer.renderOutlineNPC((ModelMPM) (Object) this, outline, (EntityCustomNpc) entity, display, partialTicks);
-            endBlooming();
+            try {
+                glStencilFunc(GL_GREATER, entity.getEntityId() % 256, 0xFF);  // Test stencil value
+                glStencilMask(0xff);
+                OutlineRenderer.renderOutlineNPC((ModelMPM) (Object) this, outline, (EntityCustomNpc) entity, display, partialTicks);
+            } finally {
+                endBlooming();
+            }
         }
 
         ////////////////////////////////////////

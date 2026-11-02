@@ -85,7 +85,13 @@ public final class ShaderHelper {
         additiveCombine = createProgram(ShaderResources.DEFAULT_VERT, ShaderResources.ADDITIVE_COMBINE_FRAG);
         downsample13 = createProgram(ShaderResources.DEFAULT_VERT, ShaderResources.DOWNSAMPLE_13TAP_FRAG);
         upsampleTent = createProgram(ShaderResources.DEFAULT_VERT, ShaderResources.UPSAMPLE_FILTER);
-        modern = createProgram(ShaderResources.MODERN_DEFAULT_VERT, ShaderResources.MODERN_DEFAULT_TEXTURE_FRAG);
+        // modern/* is #version 330 and only used by the disabled ModernModels path: compiling it on a
+        // GL 2.1 driver only fails. Load it again together with ModernModels.loadModels().
+    }
+
+    /** Whether the three programs the bloom chain needs compiled and linked. */
+    public static boolean bloomShadersLinked() {
+        return blur > 0 && additiveCombine > 0 && downsample13 > 0;
     }
 
 
@@ -135,15 +141,20 @@ public final class ShaderHelper {
     // http://lwjgl.org/wiki/index.php?title=GLSL_Shaders_with_LWJGL
 
     private static int createProgram(String vert, String frag) {
-        int vertexShader = 0, fragmentShader = 0, program = 0;
-        if (vert != null)
-            vertexShader = createShader(vert, VERT);
-        if (frag != null)
-            fragmentShader = createShader(frag, FRAG);
-
-        program = currentProgram = ARBShaderObjects.glCreateProgramObjectARB();
-        if (program == 0)
+        int vertexShader = 0, fragmentShader = 0;
+        if (vert != null && (vertexShader = createShader(vert, VERT)) <= 0)
             return 0;
+        if (frag != null && (fragmentShader = createShader(frag, FRAG)) <= 0) {
+            deleteObject(vertexShader);
+            return 0;
+        }
+
+        int program = currentProgram = ARBShaderObjects.glCreateProgramObjectARB();
+        if (program == 0) {
+            deleteObject(vertexShader);
+            deleteObject(fragmentShader);
+            return 0;
+        }
 
         if (vert != null)
             ARBShaderObjects.glAttachObjectARB(program, vertexShader);
@@ -151,20 +162,15 @@ public final class ShaderHelper {
             ARBShaderObjects.glAttachObjectARB(program, fragmentShader);
 
         ARBShaderObjects.glLinkProgramARB(program);
+        deleteObject(vertexShader);
+        deleteObject(fragmentShader);
         if (ARBShaderObjects.glGetObjectParameteriARB(program, ARBShaderObjects.GL_OBJECT_LINK_STATUS_ARB) == GL11.GL_FALSE) {
-            CommonProxy.LOGGER.error(getLogInfo(program));
+            CommonProxy.LOGGER.error("Error linking shader " + (frag != null ? frag : vert) + ": " + getLogInfo(program));
+            ARBShaderObjects.glDeleteObjectARB(program);
             return 0;
         }
-
-        ARBShaderObjects.glValidateProgramARB(program);
-        if (ARBShaderObjects.glGetObjectParameteriARB(program, ARBShaderObjects.GL_OBJECT_VALIDATE_STATUS_ARB) == GL11.GL_FALSE) {
-            CommonProxy.LOGGER.error(getLogInfo(program));
-            return 0;
-        }
-
-        ARBShaderObjects.glDeleteObjectARB(vertexShader);
-        ARBShaderObjects.glDeleteObjectARB(fragmentShader);
-
+        // No glValidateProgram here: it checks against the GL state of this moment (no textures bound
+        // at load time) and strict drivers reject programs that work fine when drawn.
 
         bindAttribute(0, "vertexPosition");
         bindAttribute(1, "colors");
@@ -172,6 +178,11 @@ public final class ShaderHelper {
 
         programs.add(program);
         return program;
+    }
+
+    private static void deleteObject(int object) {
+        if (object > 0)
+            ARBShaderObjects.glDeleteObjectARB(object);
     }
 
     public static void bindAttribute(int attribute, String variableName) {
@@ -189,14 +200,17 @@ public final class ShaderHelper {
             ARBShaderObjects.glShaderSourceARB(shader, readFile(filename));
             ARBShaderObjects.glCompileShaderARB(shader);
 
-            if (ARBShaderObjects.glGetObjectParameteriARB(shader, ARBShaderObjects.GL_OBJECT_COMPILE_STATUS_ARB) == GL11.GL_FALSE)
+            if (ARBShaderObjects.glGetObjectParameteriARB(shader, ARBShaderObjects.GL_OBJECT_COMPILE_STATUS_ARB) == GL11.GL_FALSE) {
                 CommonProxy.LOGGER.error("Error creating shader " + filename + ": " + getLogInfo(shader));
+                ARBShaderObjects.glDeleteObjectARB(shader);
+                return 0;
+            }
 
             return shader;
         } catch (Exception e) {
-            ARBShaderObjects.glDeleteObjectARB(shader);
-            e.printStackTrace();
-            return -1;
+            deleteObject(shader);
+            CommonProxy.LOGGER.error("Error creating shader " + filename, e);
+            return 0;
         }
     }
 

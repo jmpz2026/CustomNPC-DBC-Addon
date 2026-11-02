@@ -1,7 +1,7 @@
 #version 120
 
 uniform sampler2D bgl_RenderedTexture;
-uniform int time; // Passed in, see ShaderHelper.java
+uniform float time; // Passed in, see ShaderHelper.java
 
 float rand(vec2 co) {
    return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453);

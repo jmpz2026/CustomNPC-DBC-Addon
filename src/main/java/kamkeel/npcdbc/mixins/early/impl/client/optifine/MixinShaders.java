@@ -36,7 +36,8 @@ public class MixinShaders {
 
     @Inject(method = "setupFrameBuffer()V", at = @At("TAIL"))
     private static void init(CallbackInfo ci) {
-        System.out.println("hiey");
+        // OptiFine rebuilds its framebuffers on every shader pack change: free ours before making new ones.
+        PostProcessing.delete();
         PostProcessing.init(renderWidth, renderHeight);
         PostProcessing.VIEWPORT_WIDTH = renderWidth;
         PostProcessing.VIEWPORT_HEIGHT = renderHeight;
