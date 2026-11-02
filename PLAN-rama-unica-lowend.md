@@ -165,6 +165,12 @@ Goal:
 
 - 2026-11-01: plan aprobado. Diagnóstico desde logs de lukitas2718 (HD 4000) y auditoría del código.
 
+- 2026-11-02: F1 hecho en local (fast-forward, tag `archive/optimized-version`, doc a `docs/claude/rendimiento.md`).
+- 2026-11-02: F2–F4 hechos (`0ffd2617`). Cambios frente al plan: `useStencilBuffer` no se toca porque también decide si se dibujan aura, contorno y partículas; solo `glEnable(GL_STENCIL_TEST)`/`glClear(STENCIL)` quedan detrás de `stencilAvailable` (`RenderEventHandler.beginStencil`). Se quitó el FBO de aura y `blankTexture` (nunca se usaban). No se cierra `GL_STENCIL_TEST` en el camino del jugador: sin poder probar, cambiar eso con stencil presente era arriesgado.
+- 2026-11-02: F5 hecho (`77f7cc94`). Los campos de `ConfigDBCClient` son los valores efectivos; `RenderSettings.apply()` los calcula. Claves nuevas `Graphics Quality`, `Bloom`, `Outlines` (preset/on/off); `Enable Bloom/Outlines` migran. Botón "Calidad gráfica" en el menú de DBC.
+- 2026-11-02: F6 hecho en DbrServerPack (`1ddca559`): `RecortesTerceros` pide `LOW` por la API. `NpcdbcBloom` sin cambios: `bloomLevel` sigue siendo contrato público.
+- 2026-11-02: F7 parcial: versión 5.4.0 (`8ab7942f`), `build/libs/npcdbc-5.4.0.jar` compilado. Falta push, rama por defecto en GitHub, borrar la remota, versión de DbrServerPack y manifests de DBR-ASSETS (con confirmación).
+
 ## Próximo paso
 
-F1: fast-forward de optimized-version a main-version y tag archive/optimized-version.
+Pruebas en cliente local (Verificación 2–6) y, con confirmación del dueño, push + DBR-ASSETS + jar al jugador de la HD 4000.
