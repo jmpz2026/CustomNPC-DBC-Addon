@@ -34,23 +34,30 @@ public class ConfigDBCClient {
     public static Property RevampAuraProperty;
     public static boolean RevampAura = false;
 
-    public static Property EnableOutlinesProperty;
-    public static boolean EnableOutlines = true;
     public static Property EnableShadersProperty;
     public static boolean EnableShaders = true;
-    public static Property EnableBloomProperty;
-    public static boolean EnableBloom = true;
 
     public static Property FirstPerson3DAuraOpacityProperty;
     public static int FirstPerson3DAuraOpacity = 100;
 
-    // Performance. The defaults keep the original look; DbrMod's light mode sets these fields in memory.
+    // Effective rendering values: what the renderer reads. RenderSettings.apply() fills them from the
+    // quality preset and the manual settings below; nothing saves them to disk.
+    public static boolean EnableBloom = true;
+    public static boolean EnableOutlines = true;
     public static int ModelDetailMaxDistance = 0;
     public static int AuraMaxDistance = 0;
     public static int AuraParticleDensity = 100;
     public static int OutlineMaxDistance = 0;
     public static boolean BloomLowResolution = false;
     public static int BloomMaxLevels = 0;
+
+    // What the player wrote in client.cfg. "preset" / -1 = follow the Graphics Quality preset.
+    public static Property QualityPresetProperty, BloomSettingProperty, OutlinesSettingProperty;
+    public static String QualityPreset = "AUTO";
+    public static String BloomSetting = "preset", OutlinesSetting = "preset";
+    public static int ModelDetailMaxDistanceSetting = -1, AuraMaxDistanceSetting = -1, OutlineMaxDistanceSetting = -1;
+    public static int AuraParticleDensitySetting = -1, BloomMaxLevelsSetting = -1;
+    public static boolean BloomLowResolutionSetting = false;
 
     public static Property AlternateSelectionWheelTextureProperty;
     public static boolean AlteranteSelectionWheelTexture = true;
@@ -91,24 +98,13 @@ public class ConfigDBCClient {
             EnableHDTexturesProperty = config.get(RENDERING, "Enable HD Textures", false, "Uses internal DBC Addon HD Textures");
             EnableHDTextures = EnableHDTexturesProperty.getBoolean(false);
 
-            EnableOutlinesProperty = config.get(RENDERING, "Enable Outlines", true, "Enables outlines for players and NPCs");
-            EnableOutlines = EnableOutlinesProperty.getBoolean(true);
-
             EnableShadersProperty = config.get(RENDERING, "Enable Shaders", true, "Enables the use of shaders when rendering");
             EnableShaders = EnableShadersProperty.getBoolean(true);
-
-            EnableBloomProperty = config.get(RENDERING, "Enable Bloom", true, "Enables the bloom effect for player outlines and auras");
-            EnableBloom = EnableBloomProperty.getBoolean(true);
 
             FirstPerson3DAuraOpacityProperty = config.get(RENDERING, "First person 3D Aura Opacity", 100, "The opacity of the first person 3D Aura." + "\nModifying this makes it so auras on other players render normally without blinding you" + "\n(Min: 0, Max: 100)");
             FirstPerson3DAuraOpacity = Math.max(Math.min(100, FirstPerson3DAuraOpacityProperty.getInt(100)), 0);
 
-            ModelDetailMaxDistance = Math.max(0, config.get(RENDERING, "Model Detail Max Distance", 0, "NPC faces (eyes, nose, mouth, brows) are not drawn beyond this many blocks." + "\n0 = always drawn").getInt(0));
-            AuraMaxDistance = Math.max(0, config.get(RENDERING, "Aura Max Distance", 0, "Beyond this many blocks, addon auras are drawn with half the passes and a matching opacity." + "\n0 = full detail at any distance").getInt(0));
-            OutlineMaxDistance = Math.max(0, config.get(RENDERING, "Outline Max Distance", 0, "Outlines are not drawn beyond this many blocks." + "\n0 = always drawn").getInt(0));
-            BloomLowResolution = config.get(RENDERING, "Bloom Low Resolution", false, "Starts the bloom at quarter resolution instead of half. Much cheaper; the glow gets a bit softer.").getBoolean(false);
-            BloomMaxLevels = Math.max(0, config.get(RENDERING, "Bloom Max Levels", 0, "Caps the bloom mip levels. Fewer levels = cheaper and a shorter glow." + "\n0 = all levels").getInt(0));
-            AuraParticleDensity = Math.max(0, Math.min(100, config.get(RENDERING, "Aura Particle Density", 100, "Percentage of custom form aura particles that are spawned. Particles in GUIs are never cut." + "\n(Min: 0, Max: 100)").getInt(100)));
+            loadQuality();
         } catch (Exception e) {
             ClientProxy.LOGGER.error("Error loading client configuration: " + e.getMessage());
         } finally {
@@ -116,5 +112,67 @@ public class ConfigDBCClient {
                 config.save();
             }
         }
+    }
+
+    private static final String[] QUALITY_VALUES = {"AUTO", "HIGH", "MEDIUM", "LOW", "VERY_LOW"};
+    private static final String[] TOGGLE_VALUES = {"preset", "on", "off"};
+    private static final String PRESET_NOTE = "\n-1 = follow the Graphics Quality preset";
+
+    private static void loadQuality() {
+        // Version 1: the on/off toggles became preset/on/off and the performance numbers gained -1
+        // (follow the preset). Older files wrote the old defaults; those mean "follow the preset" now.
+        boolean migrate = !config.getCategory(RENDERING).containsKey("Quality Settings Version");
+        String oldBloom = migrateToggle("Enable Bloom"), oldOutlines = migrateToggle("Enable Outlines");
+
+        QualityPresetProperty = config.get(RENDERING, "Graphics Quality", "AUTO",
+            "AUTO picks from what the GPU supports. Another mod (DbrOptimizer) may lower AUTO; a fixed choice here always wins."
+                + "\nHIGH = original look. MEDIUM, LOW and VERY_LOW cut glow, outlines and detail at distance.",
+            QUALITY_VALUES);
+        QualityPreset = QualityPresetProperty.getString().toUpperCase();
+
+        BloomSettingProperty = config.get(RENDERING, "Bloom", oldBloom != null ? oldBloom : "preset",
+            "Glow around outlines and auras. preset = what Graphics Quality says.", TOGGLE_VALUES);
+        BloomSetting = BloomSettingProperty.getString();
+        OutlinesSettingProperty = config.get(RENDERING, "Outlines", oldOutlines != null ? oldOutlines : "preset",
+            "Outlines for players and NPCs. preset = what Graphics Quality says.", TOGGLE_VALUES);
+        OutlinesSetting = OutlinesSettingProperty.getString();
+
+        ModelDetailMaxDistanceSetting = presetInt("Model Detail Max Distance", 0, migrate,
+            "NPC faces (eyes, nose, mouth, brows) are not drawn beyond this many blocks.\n0 = always drawn");
+        AuraMaxDistanceSetting = presetInt("Aura Max Distance", 0, migrate,
+            "Beyond this many blocks, addon auras are drawn with half the passes and a matching opacity.\n0 = full detail at any distance");
+        OutlineMaxDistanceSetting = presetInt("Outline Max Distance", 0, migrate,
+            "Outlines are not drawn beyond this many blocks.\n0 = always drawn");
+        BloomMaxLevelsSetting = presetInt("Bloom Max Levels", 0, migrate,
+            "Caps the bloom mip levels. Fewer levels = cheaper and a shorter glow.\n0 = all levels");
+        AuraParticleDensitySetting = Math.min(100, presetInt("Aura Particle Density", 100, migrate,
+            "Percentage of custom form aura particles that are spawned. Particles in GUIs are never cut.\n(Min: 0, Max: 100)"));
+        BloomLowResolutionSetting = config.get(RENDERING, "Bloom Low Resolution", false,
+            "Starts the bloom at quarter resolution instead of half. Much cheaper; the glow gets a bit softer."
+                + "\nfalse = what Graphics Quality says").getBoolean(false);
+
+        config.get(RENDERING, "Quality Settings Version", 1, "Do not edit.").set(1);
+    }
+
+    /** Reads and removes an old true/false key: false becomes a manual "off", true follows the preset. */
+    private static String migrateToggle(String oldKey) {
+        if (!config.getCategory(RENDERING).containsKey(oldKey))
+            return null;
+        boolean on = config.getCategory(RENDERING).get(oldKey).getBoolean(true);
+        config.getCategory(RENDERING).remove(oldKey);
+        return on ? "preset" : "off";
+    }
+
+    private static int presetInt(String key, int oldDefault, boolean migrate, String comment) {
+        Property property = config.get(RENDERING, key, -1, comment + PRESET_NOTE);
+        if (migrate && property.getInt(-1) == oldDefault)
+            property.set(-1);
+        return Math.max(-1, property.getInt(-1));
+    }
+
+    /** Saves a value picked in the in-game menu (a preset name, or "preset" / "on" / "off"). */
+    public static void saveToggle(Property property, String value) {
+        property.set(value);
+        config.save();
     }
 }

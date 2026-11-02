@@ -4,6 +4,7 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import kamkeel.npcdbc.CommonProxy;
 import kamkeel.npcdbc.client.ClientConstants;
+import kamkeel.npcdbc.client.RenderSettings;
 import kamkeel.npcdbc.client.gui.hud.formWheel.HUDFormWheel;
 import kamkeel.npcdbc.config.ConfigDBCClient;
 import net.minecraft.client.Minecraft;
@@ -50,7 +51,7 @@ public class PostProcessing {
     public static boolean processBloom;
 
     /**
-     * Bloom cost, set from outside (DbrOptimizer, by reflection, from its effects quality): 0 = full,
+     * Bloom cost, set from outside (DbrOptimizer, through RenderQualityApi.setBloomLevel): 0 = full,
      * 1 = light (the blur chain starts at a quarter of the screen instead of half), 2 = off. Only
      * ever lowers what the config allows; 0 keeps the original behaviour.
      */
@@ -495,8 +496,10 @@ public class PostProcessing {
 
         // Without FBOs, enough draw buffers or the bloom shaders, nothing below can work: stay off and
         // let every effect draw straight into the scene.
-        if (!GlCaps.bloomPipeline())
+        if (!GlCaps.bloomPipeline()) {
+            RenderSettings.apply();
             return;
+        }
 
         int previousBuffer = glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
         MAIN = getMainBuffer();
@@ -555,9 +558,10 @@ public class PostProcessing {
             CommonProxy.LOGGER.warn("npcdbc bloom off: framebuffer " + failed + " is not usable on this GPU");
             delete();
             hasInitialized = true;
-            return;
+        } else {
+            bloomSupported = true;
         }
-        bloomSupported = true;
+        RenderSettings.apply();
     }
 
     private static boolean complete() {

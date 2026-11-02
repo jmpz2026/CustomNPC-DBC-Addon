@@ -249,6 +249,13 @@ display.bloom=Bloom
 display.outlines=Outlines
 display.shaders=Shaders
 display.firstPersonAura=1st Person Aura Opacity
+display.quality=Graphics Quality
+display.quality.follow=Quality
+display.quality.auto=Auto
+display.quality.high=High
+display.quality.medium=Medium
+display.quality.low=Low
+display.quality.very_low=Lowest
 
 outline.noiseSize=Noise Size
 outline.colorSmoothness=Color Smoothness

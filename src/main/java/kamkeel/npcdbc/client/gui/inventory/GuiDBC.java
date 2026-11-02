@@ -1,6 +1,7 @@
 package kamkeel.npcdbc.client.gui.inventory;
 
 import kamkeel.npcdbc.client.gui.component.GuiFormAuraScroll;
+import kamkeel.npcdbc.client.RenderSettings;
 import kamkeel.npcdbc.config.ConfigDBCClient;
 import kamkeel.npcdbc.data.PlayerDBCInfo;
 import kamkeel.npcdbc.data.aura.Aura;
@@ -119,12 +120,12 @@ public class GuiDBC extends GuiCNPCInventory implements IGuiData, ICustomScrollL
 
             y += 24;
             addLabel(new GuiNpcLabel(10, "display.bloom", guiLeft + 144, y, 0xFFFFFF));
-            GuiNpcButton button = new GuiNpcButton(10, guiLeft + 265, y - 5, 50, 20, new String[]{"gui.enabled", "gui.disabled"}, ConfigDBCClient.EnableBloom ? 0 : 1);
+            GuiNpcButton button = new GuiNpcButton(10, guiLeft + 265, y - 5, 50, 20, TOGGLE_LABELS, toggleIndex(ConfigDBCClient.BloomSetting));
             this.addButton(button);
 
             y += 24;
             addLabel(new GuiNpcLabel(11, "display.outlines", guiLeft + 144, y, 0xFFFFFF));
-            button = new GuiNpcButton(11, guiLeft + 265, y - 5, 50, 20, new String[]{"gui.enabled", "gui.disabled"}, ConfigDBCClient.EnableOutlines ? 0 : 1);
+            button = new GuiNpcButton(11, guiLeft + 265, y - 5, 50, 20, TOGGLE_LABELS, toggleIndex(ConfigDBCClient.OutlinesSetting));
             this.addButton(button);
 
             y += 24;
@@ -136,7 +137,32 @@ public class GuiDBC extends GuiCNPCInventory implements IGuiData, ICustomScrollL
             addLabel(new GuiNpcLabel(13, "display.firstPersonAura", guiLeft + 144, y, 0xFFFFFF));
             addTextField(new GuiNpcTextField(66, this, fontRendererObj, guiLeft + 279, y - 5, 35, 20, ConfigDBCClient.FirstPerson3DAuraOpacity + ""));
             getTextField(66).integersOnly = true;
+
+            y += 24;
+            addLabel(new GuiNpcLabel(14, "display.quality", guiLeft + 144, y, 0xFFFFFF));
+            button = new GuiNpcButton(14, guiLeft + 265, y - 5, 50, 20, QUALITY_LABELS, qualityIndex());
+            this.addButton(button);
         }
+    }
+
+    // Same order as the "preset" / "on" / "off" values of client.cfg.
+    private static final String[] TOGGLE_LABELS = {"display.quality.follow", "gui.enabled", "gui.disabled"};
+    private static final String[] TOGGLE_VALUES = {RenderSettings.FOLLOW, RenderSettings.ON, RenderSettings.OFF};
+    private static final String[] QUALITY_LABELS = {"display.quality.auto", "display.quality.high", "display.quality.medium", "display.quality.low", "display.quality.very_low"};
+    private static final String[] QUALITY_VALUES = {RenderSettings.AUTO, "HIGH", "MEDIUM", "LOW", "VERY_LOW"};
+
+    private static int toggleIndex(String setting) {
+        for (int i = 0; i < TOGGLE_VALUES.length; i++)
+            if (TOGGLE_VALUES[i].equalsIgnoreCase(setting))
+                return i;
+        return 0;
+    }
+
+    private static int qualityIndex() {
+        for (int i = 0; i < QUALITY_VALUES.length; i++)
+            if (QUALITY_VALUES[i].equalsIgnoreCase(ConfigDBCClient.QualityPreset))
+                return i;
+        return 0;
     }
 
     @Override
@@ -336,13 +362,17 @@ public class GuiDBC extends GuiCNPCInventory implements IGuiData, ICustomScrollL
                 ConfigDBCClient.RevampAuraProperty.set(ConfigDBCClient.RevampAura);
                 ConfigDBCClient.config.save();
             } else if (guibutton.id == 10) {
-                ConfigDBCClient.EnableBloom = ((GuiNpcButton) guibutton).getValue() == 0;
-                ConfigDBCClient.EnableBloomProperty.set(ConfigDBCClient.EnableBloom);
-                ConfigDBCClient.config.save();
+                ConfigDBCClient.BloomSetting = TOGGLE_VALUES[((GuiNpcButton) guibutton).getValue()];
+                ConfigDBCClient.saveToggle(ConfigDBCClient.BloomSettingProperty, ConfigDBCClient.BloomSetting);
+                RenderSettings.apply();
             } else if (guibutton.id == 11) {
-                ConfigDBCClient.EnableOutlines = ((GuiNpcButton) guibutton).getValue() == 0;
-                ConfigDBCClient.EnableOutlinesProperty.set(ConfigDBCClient.EnableOutlines);
-                ConfigDBCClient.config.save();
+                ConfigDBCClient.OutlinesSetting = TOGGLE_VALUES[((GuiNpcButton) guibutton).getValue()];
+                ConfigDBCClient.saveToggle(ConfigDBCClient.OutlinesSettingProperty, ConfigDBCClient.OutlinesSetting);
+                RenderSettings.apply();
+            } else if (guibutton.id == 14) {
+                ConfigDBCClient.QualityPreset = QUALITY_VALUES[((GuiNpcButton) guibutton).getValue()];
+                ConfigDBCClient.saveToggle(ConfigDBCClient.QualityPresetProperty, ConfigDBCClient.QualityPreset);
+                RenderSettings.apply();
             } else if (guibutton.id == 12) {
                 ConfigDBCClient.EnableShaders = ((GuiNpcButton) guibutton).getValue() == 0;
                 ConfigDBCClient.EnableShadersProperty.set(ConfigDBCClient.EnableShaders);
