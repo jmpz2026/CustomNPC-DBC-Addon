@@ -1,23 +1,10 @@
 # npcdbc — Optimizaciones de rendimiento
 
-Rama `optimized-version`, rehecha desde cero sobre `main-version`. Objetivo: más FPS sin
-cambiar el aspecto por defecto. Lo que sí cambia el aspecto queda detrás de ajustes cuyo
+Objetivo: más FPS sin cambiar el aspecto por defecto. Lo que sí cambia el aspecto queda detrás de ajustes cuyo
 valor de fábrica es el comportamiento original; el modo Ligero del pack los baja.
 
----
-
-## Ramas: normal y optimizada
-
-| Rama | Jar | Qué lleva |
-|---|---|---|
-| `main-version` | `npcdbc-1.1.6.jar` (normal) | El fork de DBR sin optimizaciones |
-| `optimized-version` | `npcdbc-1.1.6.jar` (optimizado) | Todo lo de `main-version` + los cambios de este documento |
-
-- Las dos ramas **solo difieren en las optimizaciones**. Todo lo que no sea de rendimiento
-  entra primero en `main-version` y después se mergea a `optimized-version`
-  (`git checkout optimized-version && git merge main-version`). Nunca al revés.
-- Los dos jars se llaman igual y tienen el mismo modid: van en carpetas de salida distintas
-  (`normal/` y `optimizado/`) y nunca juntos en `mods/`.
+Hay una sola rama, `main-version`, y un solo jar para todos los canales del launcher. La rama vieja
+`optimized-version` quedó archivada en el tag `archive/optimized-version`.
 
 ## Cómo compilar
 
