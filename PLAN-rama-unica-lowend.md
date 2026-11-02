@@ -170,7 +170,8 @@ Goal:
 - 2026-11-02: F5 hecho (`77f7cc94`). Los campos de `ConfigDBCClient` son los valores efectivos; `RenderSettings.apply()` los calcula. Claves nuevas `Graphics Quality`, `Bloom`, `Outlines` (preset/on/off); `Enable Bloom/Outlines` migran. Botón "Calidad gráfica" en el menú de DBC.
 - 2026-11-02: F6 hecho en DbrServerPack (`1ddca559`): `RecortesTerceros` pide `LOW` por la API. `NpcdbcBloom` sin cambios: `bloomLevel` sigue siendo contrato público.
 - 2026-11-02: F7 parcial: versión 5.4.0 (`8ab7942f`), `build/libs/npcdbc-5.4.0.jar` compilado. Falta push, rama por defecto en GitHub, borrar la remota, versión de DbrServerPack y manifests de DBR-ASSETS (con confirmación).
+- 2026-11-02: push de `main-version` y del tag; rama por defecto del fork = `main-version`; `optimized-version` borrada (local y remota). DbrServerPack 5.5.0 (`ccb24bc8`) con push. Despliegue armado en `_deploy/2026-11-02-npcdbc-gpu-vieja` (sustituye a `2026-11-01-modelo-gui`). DBR-ASSETS sin tocar.
 
 ## Próximo paso
 
-Pruebas en cliente local (Verificación 2–6) y, con confirmación del dueño, push + DBR-ASSETS + jar al jugador de la HD 4000.
+Probar en juego según el LEEME del despliegue. Después, con OK del dueño, subirlo a DBR-ASSETS y al servidor, y pedirle a lukitas2718 su `fml-client-latest.log`.
