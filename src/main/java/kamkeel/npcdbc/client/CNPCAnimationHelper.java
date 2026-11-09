@@ -52,6 +52,14 @@ import java.util.*;
 import static net.minecraftforge.client.IItemRenderer.ItemRenderType.EQUIPPED_FIRST_PERSON;
 
 public class CNPCAnimationHelper {
+
+    /**
+     * Hook for other mods (set by reflection, JDK type only): draws a 3D sleeve over the animated
+     * first-person right arm, in the same space as the armour box. Called with the player and the
+     * animated arm renderer while the armour pass runs.
+     */
+    public static java.util.function.BiConsumer<net.minecraft.entity.player.EntityPlayer, net.minecraft.client.model.ModelRenderer> armorSleeveHook;
+    private static boolean renderingArmor;
     private static final HashSet<Object> parentParts = new HashSet<>();
     private static final HashSet<Object> childParts = new HashSet<>();
     private static final HashSet<Object> processedModels = new HashSet<>();
@@ -489,6 +497,9 @@ public class CNPCAnimationHelper {
                 GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
                 GL11.glRotatef(0.0F, 0.0F, 0.0F, 1.0F);
                 model.bipedRightArm.render(0.0625F);
+                if (renderingArmor && armorSleeveHook != null) {
+                    armorSleeveHook.accept(Minecraft.getMinecraft().thePlayer, model.bipedRightArm);
+                }
                 GL11.glPopMatrix();
             }
 
@@ -848,17 +859,22 @@ public class CNPCAnimationHelper {
             ResourceLocation armorTexture = dbcArmorTexture != null ? RLCache.get(dbcArmorTexture.replace("jbra", "").replace("_dam", "")) : RenderBiped.getArmorResource(player, armorStack, 1, null);
             mc.getTextureManager().bindTexture(armorTexture);
 
-            if (animationId > -1) {
-                dbcFunctionAnimation(animationId, false, true);
-            }
+            // The skin arm does not get dbcFunctionAnimation here, so the armour must not either:
+            // with it the armour left the hand (guard id 0 moved it up, ki ids 3/5 turned it 115 deg).
             GL11.glColor3f(1.0F + getR(), 1.0F + getG(), 1.0F + getB());
-            GL11.glScalef(1.0001F, 1.0001F, 1.0001F);
+            // Slightly larger than the skin box: 1.0001 was coplanar and z-fought with the skin.
+            GL11.glScalef(1.05F, 1.05F, 1.05F);
             if (dbcArmorTexture != null) {
                 model.textureHeight = 64;
                 model.textureWidth = 128;
             }
             model.setRotationAngles(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F, player);
-            renderLimbs();
+            renderingArmor = true;
+            try {
+                renderLimbs();
+            } finally {
+                renderingArmor = false;
+            }
             GL11.glPopMatrix();
         }
     }
