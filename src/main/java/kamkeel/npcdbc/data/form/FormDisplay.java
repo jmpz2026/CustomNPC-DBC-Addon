@@ -32,6 +32,8 @@ public class FormDisplay implements IFormDisplay {
     public String bodyType = "";
 
     public boolean hasBodyFur = false;
+    /** Hide the native DBC tail (Saiyan and Arcosian) while in this form. */
+    public boolean hideTail = false;
     public boolean hasArcoMask = false;
     public boolean effectMajinHair = false;
     public boolean isBerserk, hasEyebrows = true;
@@ -63,6 +65,7 @@ public class FormDisplay implements IFormDisplay {
         hasArcoMask = rendering.getBoolean("hasArcoMask");
         effectMajinHair = rendering.getBoolean("effectMajinHair");
         hasBodyFur = rendering.getBoolean("hasBodyFur");
+        hideTail = rendering.getBoolean("hideTail");
         isBerserk = rendering.getBoolean("isBerserk");
         hasEyebrows = !rendering.hasKey("hasEyebrows") ? true : rendering.getBoolean("hasEyebrows");
 
@@ -91,6 +94,7 @@ public class FormDisplay implements IFormDisplay {
         rendering.setBoolean("hasArcoMask", hasArcoMask);
         rendering.setBoolean("effectMajinHair", effectMajinHair);
         rendering.setBoolean("hasBodyFur", hasBodyFur);
+        rendering.setBoolean("hideTail", hideTail);
         rendering.setBoolean("isBerserk", isBerserk);
         rendering.setBoolean("hasEyebrows", hasEyebrows);
 
@@ -338,6 +342,16 @@ public class FormDisplay implements IFormDisplay {
     @Override
     public void hasBodyFur(boolean hasFur) {
         this.hasBodyFur = hasFur;
+    }
+
+    @Override
+    public boolean hideTail() {
+        return hideTail;
+    }
+
+    @Override
+    public void hideTail(boolean hide) {
+        this.hideTail = hide;
     }
 
     @Override

@@ -51,13 +51,13 @@ public class DBCEars extends ModelDBCPartInterface {
             return;
 
         if (!ClientConstants.renderingOutline && display.outlineID != -1)
-            RenderEventHandler.enableStencilWriting((entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID) % 256);
+            RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID));
 
         GL11.glPushMatrix();
         if (ClientConstants.renderingOutline) {
             GL11.glTranslatef(0, 0.0275f, 0.005f);
             GL11.glScaled(1.05, 1.05, 1.05);
-            disableStencilWriting((entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID) % 256, false);
+            disableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID), false);
         }
 
         if (display.useSkin) {
@@ -84,10 +84,10 @@ public class DBCEars extends ModelDBCPartInterface {
         }
         GL11.glPopMatrix();
         if (!ClientConstants.renderingOutline && display.outlineID != -1)
-            RenderEventHandler.enableStencilWriting(entity.getEntityId() % 256);
+            RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId()));
 
         if (ClientConstants.renderingOutline) {
-            disableStencilWriting((entity.getEntityId()) % 256, false);
+            disableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId()), false);
         }
     }
 

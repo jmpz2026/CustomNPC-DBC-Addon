@@ -174,7 +174,7 @@ public class DBCHorns extends ModelDBCPartInterface {
 
         if (!ClientConstants.renderingOutline && display.outlineID != -1) {
             int id = !ThirdFormBigHead.isHidden ? 0 : RenderEventHandler.TAIL_STENCIL_ID;
-            RenderEventHandler.enableStencilWriting((entity.getEntityId() + id) % 256);
+            RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId() + id));
         }
 
         boolean isArco = display.race == DBCRace.ARCOSIAN;
@@ -188,7 +188,7 @@ public class DBCHorns extends ModelDBCPartInterface {
                 GL11.glScaled(1.03, 0.99, 1.03);
             }
             int id = !ThirdFormBigHead.isHidden ? 0 : RenderEventHandler.TAIL_STENCIL_ID;
-            disableStencilWriting((entity.getEntityId() + id) % 256, false);
+            disableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId() + id), false);
         }
         if (display.useSkin) {
             int state = ValueUtil.clamp(display.getCurrentArcoState(), 0, 7);
@@ -260,10 +260,10 @@ public class DBCHorns extends ModelDBCPartInterface {
 
             }
             if (!ClientConstants.renderingOutline && display.outlineID != -1)
-                RenderEventHandler.enableStencilWriting(entity.getEntityId() % 256);
+                RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId()));
 
             if (ClientConstants.renderingOutline) {
-                disableStencilWriting((entity.getEntityId()) % 256, false);
+                disableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId()), false);
             }
         } else {
             super.render(par1);

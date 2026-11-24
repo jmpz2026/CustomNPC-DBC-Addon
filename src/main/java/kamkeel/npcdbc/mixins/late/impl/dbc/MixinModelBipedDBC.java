@@ -9,6 +9,7 @@ import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import kamkeel.npcdbc.CustomNpcPlusDBC;
+import kamkeel.npcdbc.api.client.TailApi;
 import kamkeel.npcdbc.client.ClientConstants;
 import kamkeel.npcdbc.client.ColorMode;
 import kamkeel.npcdbc.client.model.part.hair.DBCHair;
@@ -25,6 +26,7 @@ import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import noppes.npcs.client.ClientEventHandler;
 import org.spongepowered.asm.mixin.Mixin;
@@ -57,6 +59,7 @@ public class MixinModelBipedDBC extends ModelBipedBody {
 
     @Inject(method = "renderHairs(FLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glPopMatrix()V", ordinal = 3))
     public void fixTailAnimNotSyncingSai2(float par1, String hair, String anim, CallbackInfoReturnable<String> ci) {
+        if (npcdbc$tailHidden()) return;
         SaiT1.render(par1);
     }
 
@@ -67,6 +70,8 @@ public class MixinModelBipedDBC extends ModelBipedBody {
 
     @Inject(method = "renderHairs(FLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glPopMatrix()V", ordinal = 2))
     public void fixTailAnimNotSyncingArco2(float par1, String hair, String anim, CallbackInfoReturnable<String> ci) {
+        // Arcosian: only the tail (FroB) goes, the horns and spikes of the same call stay
+        if (npcdbc$tailHidden()) return;
         FroB.render(par1);
     }
 
@@ -100,13 +105,19 @@ public class MixinModelBipedDBC extends ModelBipedBody {
     @Inject(method = "renderHairs(FLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;", at = @At("TAIL"), cancellable = true)
     public void tailStencil(float par1, String hair, String anim, CallbackInfoReturnable<String> ci) {
         if (!ClientConstants.renderingOutline && (hair.contains("SJT") || hair.contains("FR") || hair.equals("N")))
-            RenderEventHandler.enableStencilWriting(ClientEventHandler.renderingPlayer.getEntityId() % 256);
+            RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(ClientEventHandler.renderingPlayer.getEntityId()));
     }
 
     @Inject(method = "renderHairs(FLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;", at = @At("HEAD"), cancellable = true)
     public void formRendering(float par1, String hair, String anim, CallbackInfoReturnable<String> ci, @Local(ordinal = 0) LocalRef<String> Hair) {
+        // Saiyan tail ("SJT1" hanging, "SJT2" wrapped, each in its own call): skip the whole call,
+        // before the stencil is switched to the tail one
+        if (hair.contains("SJT") && npcdbc$tailHidden()) {
+            ci.setReturnValue("");
+            return;
+        }
         if (!ClientConstants.renderingOutline && (hair.contains("SJT") || hair.contains("FR") || hair.equals("N")))
-            RenderEventHandler.enableStencilWriting((ClientEventHandler.renderingPlayer.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID) % 256);
+            RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(ClientEventHandler.renderingPlayer.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID));
 
 
         if (ClientEventHandler.renderingPlayer != null) {
@@ -307,6 +318,16 @@ public class MixinModelBipedDBC extends ModelBipedBody {
     public void disableFace(String faceType, CallbackInfoReturnable<String> ci) {
         if ((faceType.contains("FACENOSE") && !Utility.stackTraceContains("renderSSJ4Face")) || faceType.contains("FACEMOUTH") || faceType.contains("EYEBROW") || (faceType.contains("EYEBASE") && !Utility.stackTraceContains("renderOozaru")) || faceType.contains("EYELEFT") || faceType.contains("EYERIGHT"))
             ci.setReturnValue("");
+    }
+
+    /** The native tail of the player being drawn is hidden by its form or by {@link TailApi}. */
+    @Unique
+    private static boolean npcdbc$tailHidden() {
+        EntityPlayer player = ClientEventHandler.renderingPlayer;
+        if (player == null) return false;
+        if (TailApi.isHidden(player)) return true;
+        Form form = DBCData.getForm(player);
+        return form != null && form.display.hideTail;
     }
 
     @Unique

@@ -137,12 +137,12 @@ public class AuraRenderer extends RenderDBC {
         glDepthMask(false);
         glPushMatrix();
 
-        glStencilFunc(GL_ALWAYS, aura.entity.getEntityId() % 256, 0xFF);
+        glStencilFunc(GL_ALWAYS, RenderEventHandler.stencilRef(aura.entity.getEntityId()), 0xFF);
         glStencilMask(0xFF);
         float r = rand.nextInt(50);
         if (aura.hasLightning && r < 5 && age < 10)
             lightning(aura, interPosX, interPosY + aura.getYOffset(), interPosZ);
-        glStencilFunc(GL_GREATER, aura.entity.getEntityId() % 256, 0xFF);
+        glStencilFunc(GL_GREATER, RenderEventHandler.stencilRef(aura.entity.getEntityId()), 0xFF);
         glStencilMask(0x0);
 
 

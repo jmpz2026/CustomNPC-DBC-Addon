@@ -236,6 +236,12 @@ public class SubGuiFormDisplay extends SubGuiInterface implements ISubGuiListene
             window.addButton(new GuiButtonBiDirectional(114, width - x - 75 - 12, y - 5, 73, 20, arcoForms, index));
         }
 
+        if (DBCRace.isSaiyan(visualDisplay.race) || visualDisplay.race == DBCRace.ARCOSIAN) {
+            y += 25;
+            window.addLabel(new GuiNpcLabel(126, "display.hideTail", x, y, 0xFFFFFF));
+            window.addButton(new GuiNpcButtonYesNo(126, width - x - 75, y - 5, 50, 20, display.hideTail));
+        }
+
         window.maxScrollY = (y - height) + 20 + 5;
     }
 
@@ -467,6 +473,11 @@ public class SubGuiFormDisplay extends SubGuiInterface implements ISubGuiListene
         // Body Fur
         if (button.id == 123) {
             display.hasBodyFur = !display.hasBodyFur;
+            updateButtons();
+        }
+        // Hide native tail
+        if (button.id == 126) {
+            display.hideTail = !display.hideTail;
             updateButtons();
         }
 

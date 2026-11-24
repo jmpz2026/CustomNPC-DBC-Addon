@@ -50,6 +50,17 @@ public class RenderEventHandler {
     public static boolean renderingPlayerInGUI = false;
     public static final int TAIL_STENCIL_ID = 2;
 
+    /**
+     * Stencil reference for an entity, always in 1..255.
+     * The old {@code id % 256} gave 0 or a negative value (clamped to 0 by GL) for
+     * entities with a negative id (DbrVfxMod cutscene actors) and for ids that are a
+     * multiple of 256. With a 0 reference the {@code GL_GREATER} test never passes and
+     * the outline is not drawn.
+     */
+    public static int stencilRef(int value) {
+        return Math.floorMod(value, 255) + 1;
+    }
+
 
     @SubscribeEvent
     public void renderPotaraWhenFused(RenderPlayerEvent.SetArmorModel event) {
@@ -94,7 +105,7 @@ public class RenderEventHandler {
     public void enableHandStencil(DBCPlayerEvent.RenderArmEvent.Pre e) {
         if (mc.theWorld != null && PlayerDataUtil.useStencilBuffer(e.entity)) {
             beginStencil();
-            enableStencilWriting(e.entity.getEntityId() % 256);
+            enableStencilWriting(RenderEventHandler.stencilRef(e.entity.getEntityId()));
             lightmapBefore.put(e.entity.getEntityId(), LightmapState.isOn());
             Minecraft.getMinecraft().entityRenderer.disableLightmap(0);
         }
@@ -127,7 +138,7 @@ public class RenderEventHandler {
 
             if (PlayerDataUtil.useStencilBuffer(e.entity)) {
                 beginStencil();
-                enableStencilWriting(e.entity.getEntityId() % 256);
+                enableStencilWriting(RenderEventHandler.stencilRef(e.entity.getEntityId()));
                 lightmapBefore.put(e.entity.getEntityId(), LightmapState.isOn());
                 Minecraft.getMinecraft().entityRenderer.disableLightmap(0);
                 glDepthMask(true); //fixes a native MC RP1 entity bug in which the depth test is disabled
@@ -168,7 +179,7 @@ public class RenderEventHandler {
         if (!isItem && PlayerDataUtil.outlineVisible(player, outline != null)) {
             startBlooming(ClientConstants.renderingGUI);
             try {
-                glStencilFunc(GL_GREATER, player.getEntityId() % 256, 0xFF);  // Test stencil value
+                glStencilFunc(GL_GREATER, RenderEventHandler.stencilRef(player.getEntityId()), 0xFF);  // Test stencil value
                 glStencilMask(0xff);
                 OutlineRenderer.renderOutline(render, outline, player, partialTicks, isArm);
             } finally {
@@ -188,7 +199,7 @@ public class RenderEventHandler {
                 glLoadMatrix(DEFAULT_MODELVIEW);
 
             glPushMatrix();
-            glStencilFunc(GL_GREATER, player.getEntityId() % 256, 0xFF);
+            glStencilFunc(GL_GREATER, RenderEventHandler.stencilRef(player.getEntityId()), 0xFF);
             glStencilMask(0x00);
             for (EntityAura child : aura.children.values())
                 AuraRenderer.Instance.renderAura(child, partialTicks);
@@ -212,7 +223,7 @@ public class RenderEventHandler {
                 glLoadMatrix(DEFAULT_MODELVIEW);
 
             glPushMatrix();
-            glStencilFunc(GL_GREATER, player.getEntityId() % 256, 0xFF);
+            glStencilFunc(GL_GREATER, RenderEventHandler.stencilRef(player.getEntityId()), 0xFF);
             glStencilMask(0x0);
             IRenderCusPar particleRender = null;
             for (Iterator<EntityCusPar> iter = data.particleRenderQueue.iterator(); iter.hasNext(); ) {
@@ -250,7 +261,7 @@ public class RenderEventHandler {
         RenderCustomNpc r = (RenderCustomNpc) e.renderer;
         float partialTicks = Minecraft.getMinecraft().timer.renderPartialTicks;
 
-        disableStencilWriting(entity.getEntityId() % 256, false);
+        disableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId()), false);
         saveLightmap(entity);
         mc.entityRenderer.disableLightmap(0);
 
@@ -262,7 +273,7 @@ public class RenderEventHandler {
             glPushMatrix();
             if (!ClientConstants.renderingGUI)
                 glLoadMatrix(DEFAULT_MODELVIEW); //RESETS TRANSFORMATIONS DONE TO CURRENT MATRIX TO PRE-ENTITY RENDERING STATE
-            glStencilFunc(GL_GREATER, entity.getEntityId() % 256, 0xFF);
+            glStencilFunc(GL_GREATER, RenderEventHandler.stencilRef(entity.getEntityId()), 0xFF);
             glStencilMask(0x0);
             for (EntityAura child : aura.children.values())
                 if (child.shouldRender())
@@ -279,7 +290,7 @@ public class RenderEventHandler {
         ////////////////////////////////////////
         //DBC Aura
         if (!display.dbcSecondaryAuraQueue.isEmpty()) {
-            glStencilFunc(GL_GREATER, entity.getEntityId() % 256, 0xFF);
+            glStencilFunc(GL_GREATER, RenderEventHandler.stencilRef(entity.getEntityId()), 0xFF);
             glStencilMask(0x0);
             glPushMatrix();
             IRenderEntityAura2 auraRenderer = null;
@@ -300,7 +311,7 @@ public class RenderEventHandler {
         }
 
         if (!display.dbcAuraQueue.isEmpty()) {
-            glStencilFunc(GL_GREATER, entity.getEntityId() % 256, 0xFF);
+            glStencilFunc(GL_GREATER, RenderEventHandler.stencilRef(entity.getEntityId()), 0xFF);
             glStencilMask(0x0);
             glPushMatrix();
             IRenderEntityAura2 auraRenderer = null;
@@ -344,7 +355,7 @@ public class RenderEventHandler {
 
         ////////////////////////////////////////
         ////////////////////////////////////////
-        enableStencilWriting(e.entity.getEntityId() % 256);
+        enableStencilWriting(RenderEventHandler.stencilRef(e.entity.getEntityId()));
         if (ClientConstants.renderingGUI)
             PostProcessing.bloom(1.5f, true);
         restoreLightmap(entity);

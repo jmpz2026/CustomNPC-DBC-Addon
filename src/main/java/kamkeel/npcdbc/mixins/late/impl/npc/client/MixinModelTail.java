@@ -63,7 +63,7 @@ public abstract class MixinModelTail extends ModelScaleRenderer {
                 return;
 
             if (!ClientConstants.renderingOutline && display.outlineID != -1)
-                RenderEventHandler.enableStencilWriting((entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID) % 256);
+                RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID));
 
             if (ClientConstants.renderingOutline) {
                 if (!monkey.monkey_wrapped.isHidden)
@@ -75,7 +75,7 @@ public abstract class MixinModelTail extends ModelScaleRenderer {
                         glTranslatef(0, 0.075f, 0);
                     GL11.glScaled(0.945, 0.945, 0.945);
                 }
-                disableStencilWriting((entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID) % 256, false);
+                disableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID), false);
             }
 
             int tailColor = 0;
@@ -150,10 +150,10 @@ public abstract class MixinModelTail extends ModelScaleRenderer {
         DBCDisplay display = ((INPCDisplay) entity.display).getDBCDisplay();
 
         if (!ClientConstants.renderingOutline && display.outlineID != -1)
-            RenderEventHandler.enableStencilWriting((entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID) % 256);
+            RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID));
 
         if (ClientConstants.renderingOutline)
-            disableStencilWriting((entity.getEntityId()) % 256, false);
+            disableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId()), false);
 
     }
 }

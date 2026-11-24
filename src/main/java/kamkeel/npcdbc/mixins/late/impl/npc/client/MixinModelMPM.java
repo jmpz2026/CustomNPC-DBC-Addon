@@ -93,7 +93,7 @@ public abstract class MixinModelMPM extends ModelNPCMale implements IModelMPM {
         if (PlayerDataUtil.outlineVisible(entity, outline != null)) {
             startBlooming(ClientConstants.renderingGUI);
             try {
-                glStencilFunc(GL_GREATER, entity.getEntityId() % 256, 0xFF);  // Test stencil value
+                glStencilFunc(GL_GREATER, RenderEventHandler.stencilRef(entity.getEntityId()), 0xFF);  // Test stencil value
                 glStencilMask(0xff);
                 OutlineRenderer.renderOutlineNPC((ModelMPM) (Object) this, outline, (EntityCustomNpc) entity, display, partialTicks);
             } finally {
@@ -103,7 +103,7 @@ public abstract class MixinModelMPM extends ModelNPCMale implements IModelMPM {
 
         ////////////////////////////////////////
         ////////////////////////////////////////
-        RenderEventHandler.enableStencilWriting(entity.getEntityId() % 256);
+        RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId()));
         Minecraft.getMinecraft().entityRenderer.enableLightmap(0);
 
     }

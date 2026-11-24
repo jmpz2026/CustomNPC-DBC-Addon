@@ -1,6 +1,7 @@
 package kamkeel.npcdbc.mixins.late.impl.dbc;
 
 import kamkeel.npcdbc.client.render.LightmapState;
+import kamkeel.npcdbc.client.render.RenderEventHandler;
 import JinRyuu.DragonBC.common.Npcs.EntityAura2;
 import JinRyuu.DragonBC.common.Npcs.ModelAura;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -139,7 +140,7 @@ public class MixinRenderAura2 implements IRenderEntityAura2 {
         if (SubGuiAuraDisplay.useGUIAura) {
             float scale = 0.55f;
             GL11.glScalef(scale, scale, scale);
-            glStencilFunc(GL_ALWAYS, aura.getEntity().getEntityId() % 256, 0xFF);
+            glStencilFunc(GL_ALWAYS, RenderEventHandler.stencilRef(aura.getEntity().getEntityId()), 0xFF);
             glStencilMask(0xFF);
         }
         Minecraft.getMinecraft().entityRenderer.disableLightmap(0);
@@ -153,7 +154,7 @@ public class MixinRenderAura2 implements IRenderEntityAura2 {
             return;
 
         if (SubGuiAuraDisplay.useGUIAura) {
-            glStencilFunc(GL_GREATER, aura.getEntity().getEntityId() % 256, 0xFF);
+            glStencilFunc(GL_GREATER, RenderEventHandler.stencilRef(aura.getEntity().getEntityId()), 0xFF);
             glStencilMask(0x0);
         }
 

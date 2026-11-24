@@ -61,7 +61,7 @@ public class DBCBody extends ModelDBCPartInterface {
             return;
 
         if (!ClientConstants.renderingOutline && display.outlineID != -1)
-            RenderEventHandler.enableStencilWriting((entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID) % 256);
+            RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID));
 
         GL11.glPushMatrix();
         float spike1RotX = 0;
@@ -70,7 +70,7 @@ public class DBCBody extends ModelDBCPartInterface {
             GL11.glTranslatef(0.015f, -0.02f, 0);
             GL11.glScaled(1.02, 1.02, 0.95);
             backSpike1.rotationPointX = -1.4f;
-            disableStencilWriting((entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID) % 256, false);
+            disableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId() + RenderEventHandler.TAIL_STENCIL_ID), false);
         }
 
         if (display.useSkin) {
@@ -97,10 +97,10 @@ public class DBCBody extends ModelDBCPartInterface {
         }
         GL11.glPopMatrix();
         if (!ClientConstants.renderingOutline && display.outlineID != -1)
-            RenderEventHandler.enableStencilWriting(entity.getEntityId() % 256);
+            RenderEventHandler.enableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId()));
 
         if (ClientConstants.renderingOutline) {
-            disableStencilWriting((entity.getEntityId()) % 256, false);
+            disableStencilWriting(RenderEventHandler.stencilRef(entity.getEntityId()), false);
             backSpike1.rotationPointX = spike1RotX;
         }
     }

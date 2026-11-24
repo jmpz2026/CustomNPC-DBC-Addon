@@ -115,6 +115,13 @@ public interface IFormDisplay {
      */
     void hasBodyFur(boolean hasFur);
 
+    boolean hideTail();
+
+    /**
+     * @param hide True to hide the native DBC tail (Saiyan and Arcosian) while in this form
+     */
+    void hideTail(boolean hide);
+
     boolean effectMajinHair();
 
     /**
