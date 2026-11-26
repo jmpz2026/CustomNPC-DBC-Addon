@@ -181,6 +181,10 @@ public abstract class MixinJRMCoreH {
         if (DBCUtils.calculatingCost)
             return;
 
+        // Inner call from the vanilla floor below: let DBC compute the vanilla value.
+        if (customNPC_DBC_Addon$vanillaFloor.get())
+            return;
+
         if (player == null)
             return;
 
@@ -309,6 +313,24 @@ public abstract class MixinJRMCoreH {
             result = (int) (result * (averageMulti * statusMulti));
         }
 
+        // Floor for forms stacked on a vanilla form: the custom form multiplies the FULL vanilla
+        // value (Legendary, Majin, Kaioken, Mystic, UI, GoD, Divine as DBC computes them). The
+        // formula above rebuilds the statuses with the form's own numbers (legendaryStrength 1.2
+        // instead of DBC's +50%, ...), which could leave the stacked form below the vanilla form alone.
+        if (form.stackable.vanillaStackable && st > 0 && !customNPC_DBC_Addon$vanillaFloor.get()
+            && (attribute == DBCAttribute.Strength || attribute == DBCAttribute.Dexterity
+            || attribute == DBCAttribute.Willpower || attribute == DBCAttribute.Constitution)) {
+            int vanilla = customNPC_DBC_Addon$vanillaAttribute(player, currAttributes, attribute, st, st2, race, SklX, currRelease, arcRel, legendOn, majinOn, kaiokenOn, mysticOn, uiOn, GoDOn, powerType, Skls, isFused, majinAbs);
+            float statMulti = attribute == DBCAttribute.Strength ? formMulti[0]
+                : attribute == DBCAttribute.Dexterity ? formMulti[1]
+                : attribute == DBCAttribute.Willpower ? formMulti[2]
+                : (formMulti[0] + formMulti[1] + formMulti[2]) / 3;
+            float mastery = ((FormMastery) dbcData.getForm().getMastery()).calculateMulti("attribute", currentFormLevel);
+            double floor = (double) vanilla * statMulti * mastery;
+            if (floor > result)
+                result = (int) Math.min(floor, Integer.MAX_VALUE);
+        }
+
         // Apply player bonuses for custom forms (since applyBonusToDBC won't run)
         if (!DBCUtils.noBonusEffects && !DBCUtils.calculatingKiDrain && !DBCUtils.calculatingCost) {
             float[] bonus = dbcData.bonus.getMultiBonus();
@@ -345,6 +367,23 @@ public abstract class MixinJRMCoreH {
         }
 
         info.setReturnValue(result);
+    }
+
+    @Unique
+    private static final ThreadLocal<Boolean> customNPC_DBC_Addon$vanillaFloor = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    /** DBC's own value for the vanilla form (all statuses, no addon bonuses), skipping the custom-form path. */
+    @Unique
+    private static int customNPC_DBC_Addon$vanillaAttribute(EntityPlayer player, int[] currAttributes, int attribute, int st, int st2, int race, String SklX, int currRelease, int arcRel, boolean legendOn, boolean majinOn, boolean kaiokenOn, boolean mysticOn, boolean uiOn, boolean GoDOn, int powerType, String[] Skls, boolean isFused, String majinAbs) {
+        boolean noBonus = DBCUtils.noBonusEffects;
+        customNPC_DBC_Addon$vanillaFloor.set(Boolean.TRUE);
+        DBCUtils.noBonusEffects = true;
+        try {
+            return JRMCoreH.getPlayerAttribute(player, currAttributes, attribute, st, st2, race, SklX, currRelease, arcRel, legendOn, majinOn, kaiokenOn, mysticOn, uiOn, GoDOn, powerType, Skls, isFused, majinAbs);
+        } finally {
+            DBCUtils.noBonusEffects = noBonus;
+            customNPC_DBC_Addon$vanillaFloor.set(Boolean.FALSE);
+        }
     }
 
     private static float[][] getRightMultiArray(int race) {
