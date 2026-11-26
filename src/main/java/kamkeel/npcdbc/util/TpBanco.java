@@ -68,8 +68,8 @@ public final class TpBanco {
      * cobra el resto del total en el servidor). 0 si el atributo esta al maximo.
      */
     public static long costeMejora(int[] attrs, int ma) {
-        int normal = JRMCoreH.attrCst(attrs, ma);
-        if (normal > 0) return normal;
+        // Sin mirar attrCst(attrs, ma): suma en int y por encima de 2^31 da la vuelta (x1000 de
+        // 4,68e9 devuelve 386 M). La suma en long es la misma cuenta.
         int att = JRMCoreH.attributeCostAboveLimit(attrs);
         if (att >= TOPE_JRMCORE || att <= 0) return 0;
         int veces = JRMCoreH.attributeMultiplier(ma);
@@ -79,6 +79,6 @@ public final class TpBanco {
             if (c == 0) return 0;
             suma += c;
         }
-        return suma > TOPE_JRMCORE ? suma : 0;
+        return suma;
     }
 }
