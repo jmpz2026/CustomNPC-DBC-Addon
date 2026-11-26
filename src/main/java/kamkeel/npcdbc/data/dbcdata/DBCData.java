@@ -58,6 +58,8 @@ public class    DBCData extends DBCDataUniversal implements IAuraData {
     public EntityPlayer player;
 
     // Original DBC
+    /** DBR: TP leido en la ultima carga o guardado; saveFromNBT solo aplica la diferencia. */
+    private int tpCargado;
     public int STR, DEX, CON, WIL, MND, SPI, TP, Body, Ki, Stamina, KOforXSeconds, Rage, Heat, Pain, AuraColor, ArcReserve, hasSSJ4;
     public byte Class, Race, Powertype, Accept, State, State2, Release, Alignment, Tail;
     public boolean Alive, isKO;
@@ -133,7 +135,19 @@ public class    DBCData extends DBCDataUniversal implements IAuraData {
         comp.setInteger("jrmcAuraColor", AuraColor);
         comp.setInteger("jrmcArcRsrv", ArcReserve);
         comp.setInteger("jrmcAfGFtStFT", hasSSJ4);
-        comp.setInteger("jrmcTpint", TP);
+        // DBR (DbrTpBanco): solo el cambio que hizo este objeto. Escribir el TP cacheado pisaba lo
+        // que otro sistema sumo o el normalizador movio al banco desde la carga (dupe o perdida).
+        // Un compound vacio (PingPacket) es una copia para mandar: lleva el valor del campo tal cual.
+        if (!comp.hasKey("jrmcTpint")) {
+            comp.setInteger("jrmcTpint", TP);
+        } else {
+            if (TP != tpCargado) {
+                long nuevo = (long) comp.getInteger("jrmcTpint") + ((long) TP - tpCargado);
+                comp.setInteger("jrmcTpint", (int) Math.max(0L, Math.min(Integer.MAX_VALUE, nuevo)));
+            }
+            TP = comp.getInteger("jrmcTpint");
+            tpCargado = TP;
+        }
 
         comp.setByte("jrmcState", State);
         comp.setByte("jrmcState2", State2);
@@ -194,6 +208,7 @@ public class    DBCData extends DBCDataUniversal implements IAuraData {
         AuraColor = c.getInteger("jrmcAuraColor");
         ArcReserve = c.getInteger("jrmcArcRsrv");
         TP = c.getInteger("jrmcTpint");
+        tpCargado = TP;
 
         State = c.getByte("jrmcState");
         State2 = c.getByte("jrmcState2");

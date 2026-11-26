@@ -308,7 +308,7 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
 
 
         dynamicLabels.get("tp")
-            .updateDisplay(numSep(curTP))
+            .updateDisplay(numSep(kamkeel.npcdbc.util.TpBanco.totalCliente()))
             .updateTooltip(cllr + numSep(attrCst(PlyrAttrbts, 0)) + cldgy);
 
         dynamicLabels.get("race")
@@ -341,8 +341,9 @@ public class StatSheetGui extends AbstractJRMCGui implements GuiYesNoCallback {
             .updateDisplay(algnCur(align))
             .updateTooltip(align + "%");
 
-        int upgradeCost = attrCst(PlyrAttrbts, this.upgradeCounter);
-        boolean canAffordUpgrade = curTP >= upgradeCost;
+        // DBR (DbrTpBanco): coste real sin el tope de 2e9, contra el total billetera + banco.
+        long upgradeCost = kamkeel.npcdbc.util.TpBanco.costeMejora(PlyrAttrbts, this.upgradeCounter);
+        boolean canAffordUpgrade = kamkeel.npcdbc.util.TpBanco.totalCliente() >= upgradeCost;
         boolean allMaxed = acm(PlyrAttrbts);
 
         int[] statVals = new int[6];
